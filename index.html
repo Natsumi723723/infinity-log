@@ -59,31 +59,34 @@
     transition: var(--theme-transition);
   }
 
-  body::before {
-    content: '';
+  .grid-overlay {
     position: fixed;
     inset: 0;
     background-image:
-      linear-gradient(var(--grid-color) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+      linear-gradient(rgba(233,30,140,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(233,30,140,0.04) 1px, transparent 1px);
     background-size: 40px 40px;
     pointer-events: none;
     z-index: 0;
-    transition: var(--theme-transition);
+    transition: opacity 0.35s ease;
   }
 
-  body::after {
-    content: '';
+  [data-theme="light"] .grid-overlay { opacity: 0; }
+
+  .glow-orb {
     position: fixed;
     top: -200px;
     left: 50%;
     transform: translateX(-50%);
     width: 800px;
     height: 400px;
-    background: radial-gradient(ellipse, var(--glow-orb) 0%, transparent 70%);
+    background: radial-gradient(ellipse, rgba(233,30,140,0.12) 0%, transparent 70%);
     pointer-events: none;
     z-index: 0;
+    transition: opacity 0.35s ease;
   }
+
+  [data-theme="light"] .glow-orb { opacity: 0; }
 
   #root { position: relative; z-index: 1; }
 
@@ -568,7 +571,11 @@
     background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
     pointer-events: none;
     z-index: 999;
+    transition: opacity 0.35s ease;
   }
+
+  [data-theme="light"] .scanlines,
+  [data-theme="light"] .grid-overlay { opacity: 0; }
 
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
@@ -580,6 +587,8 @@
 </style>
 </head>
 <body>
+<div class="glow-orb"></div>
+<div class="grid-overlay"></div>
 <div class="scanlines"></div>
 <div id="root"></div>
 
