@@ -394,6 +394,77 @@
     transform: translateX(2px);
   }
 
+  .memo-card.editing {
+    border-left-color: var(--cyan);
+    border-color: rgba(0,255,255,0.3);
+    box-shadow: 0 0 20px rgba(0,255,255,0.15);
+    transform: none;
+  }
+
+  textarea.memo-edit-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+    color: #f0e6ff;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.65;
+    letter-spacing: 0.02em;
+    caret-color: var(--cyan);
+    padding: 0;
+  }
+
+  .memo-edit-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(0,255,255,0.15);
+  }
+
+  .edit-hint {
+    font-family: 'Orbitron', monospace;
+    font-size: 8px;
+    letter-spacing: 0.15em;
+    color: rgba(0,255,255,0.4);
+    flex: 1;
+  }
+
+  .edit-cancel-btn {
+    font-family: 'Orbitron', monospace;
+    font-size: 8px;
+    letter-spacing: 0.15em;
+    color: rgba(240,230,255,0.3);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+
+  .edit-save-btn {
+    font-family: 'Orbitron', monospace;
+    font-size: 8px;
+    letter-spacing: 0.15em;
+    color: var(--cyan);
+    text-shadow: 0 0 6px var(--cyan);
+    background: none;
+    border: 1px solid rgba(0,255,255,0.3);
+    border-radius: 2px;
+    cursor: pointer;
+    padding: 4px 10px;
+    transition: all 0.2s;
+  }
+
+  .edit-save-btn:hover {
+    background: rgba(0,255,255,0.1);
+    box-shadow: 0 0 8px rgba(0,255,255,0.3);
+  }
+
   .memo-time {
     font-family: 'Orbitron', monospace;
     font-size: 9px;
@@ -491,11 +562,69 @@ function nowFormatted() {
 }
 
 /* ── Components ── */
-function MemoCard({ memo, isNew }) {
+function MemoCard({ memo, isNew, onUpdate }) {
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState(memo.text);
+  const taRef = useRef(null);
+
+  useEffect(() => {
+    if (editing && taRef.current) {
+      taRef.current.style.height = 'auto';
+      taRef.current.style.height = taRef.current.scrollHeight + 'px';
+      taRef.current.focus();
+      const len = taRef.current.value.length;
+      taRef.current.setSelectionRange(len, len);
+    }
+  }, [editing]);
+
+  const handleSave = async () => {
+    if (!editText.trim()) return;
+    await onUpdate(memo.id, editText.trim());
+    setEditing(false);
+  };
+
+  const handleCancel = () => {
+    setEditText(memo.text);
+    setEditing(false);
+  };
+
+  const handleKeyDown = (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); handleSave(); }
+    if (e.key === 'Escape') handleCancel();
+  };
+
+  const handleInput = (e) => {
+    setEditText(e.target.value);
+    e.target.style.height = 'auto';
+    e.target.style.height = e.target.scrollHeight + 'px';
+  };
+
   return (
-    <div className={`memo-card ${isNew ? 'new-entry' : ''}`}>
+    <div
+      className={`memo-card ${isNew ? 'new-entry' : ''} ${editing ? 'editing' : ''}`}
+      onClick={() => { if (!editing) setEditing(true); }}
+      style={{ cursor: editing ? 'default' : 'text' }}
+    >
       <div className="memo-time">{formatTime(memo.created_at)}</div>
-      <div className="memo-text">{memo.text}</div>
+      {editing ? (
+        <>
+          <textarea
+            ref={taRef}
+            className="memo-edit-input"
+            value={editText}
+            onChange={handleInput}
+            onKeyDown={handleKeyDown}
+            onClick={e => e.stopPropagation()}
+          />
+          <div className="memo-edit-footer" onClick={e => e.stopPropagation()}>
+            <span className="edit-hint">⌘ + ENTER to save  •  ESC to cancel</span>
+            <button className="edit-cancel-btn" onClick={handleCancel}>CANCEL</button>
+            <button className="edit-save-btn" onClick={handleSave}>SAVE</button>
+          </div>
+        </>
+      ) : (
+        <div className="memo-text">{memo.text}</div>
+      )}
     </div>
   );
 }
@@ -601,7 +730,10 @@ function App() {
     /* Realtime */
     const channel = sb.channel('diary_realtime')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'diary_logs' }, payload => {
-        setMemos(prev => [payload.new, ...prev]);
+        setMemos(prev => prev.find(m => m.id === payload.new.id) ? prev : [payload.new, ...prev]);
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'diary_logs' }, payload => {
+        setMemos(prev => prev.map(m => m.id === payload.new.id ? payload.new : m));
       })
       .subscribe();
     return () => sb.removeChannel(channel);
@@ -646,6 +778,15 @@ function App() {
       commitMemo();
     }
   };
+
+  const updateMemo = useCallback(async (id, text) => {
+    setSyncStatus('syncing');
+    const { data, error } = await sb.from('diary_logs').update({ text }).eq('id', id).select().single();
+    if (!error && data) {
+      setMemos(prev => prev.map(m => m.id === id ? data : m));
+    }
+    setSyncStatus('synced');
+  }, []);
 
   const handleChange = (e) => {
     setDraft(e.target.value);
@@ -725,7 +866,7 @@ function App() {
           <div key={group.key}>
             <DateDivider dateStr={group.dateStr} isToday={group.key === todayKey} />
             {group.memos.map(memo => (
-              <MemoCard key={memo.id} memo={memo} isNew={newIds.has(memo.id)} />
+              <MemoCard key={memo.id} memo={memo} isNew={newIds.has(memo.id)} onUpdate={updateMemo} />
             ))}
           </div>
         ))}
