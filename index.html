@@ -171,12 +171,26 @@
     font-family: 'Orbitron', monospace;
   }
 
-  .auth-email-display {
-    font-size: 13px;
-    color: rgba(240,230,255,0.6);
-    margin-bottom: 24px;
+  .auth-email-input {
+    width: 100%;
+    background: rgba(240,230,255,0.05);
+    border: 1px solid rgba(233,30,140,0.3);
+    border-radius: 2px;
+    color: #f0e6ff;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
     letter-spacing: 0.05em;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    caret-color: var(--pink);
   }
+  .auth-email-input:focus {
+    border-color: var(--pink);
+    box-shadow: 0 0 12px rgba(233,30,140,0.3);
+  }
+  .auth-email-input::placeholder { color: rgba(240,230,255,0.2); }
 
   .auth-btn {
     width: 100%;
@@ -452,7 +466,6 @@ const { useState, useRef, useEffect, useCallback } = React;
 /* ── Supabase ── */
 const SB_URL = "https://gjcbtolotqywzdggckto.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqY2J0b2xvdHF5d3pkZ2dja3RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0NzU4MzIsImV4cCI6MjA5NjA1MTgzMn0.dnMQl7cB5H7MGz0Nuh8PibQuYa1iYYmauJEhrlfyDBc";
-const OWNER_EMAIL = "sweet.summer.fruit.723@gmail.com";
 const sb = supabase.createClient(SB_URL, SB_KEY, {
   auth: { persistSession: true, detectSessionInUrl: true, autoRefreshToken: true }
 });
@@ -498,15 +511,17 @@ function DateDivider({ dateStr, isToday }) {
 }
 
 function AuthScreen() {
+  const [email, setEmail] = useState('');
   const [sending, setSending] = useState(false);
   const [msg, setMsg] = useState('');
 
   const sendMagicLink = async () => {
+    if (!email.trim()) return;
     setSending(true);
     setMsg('');
     const redirectTo = window.location.href.split('?')[0].split('#')[0];
     const { error } = await sb.auth.signInWithOtp({
-      email: OWNER_EMAIL,
+      email: email.trim(),
       options: { emailRedirectTo: redirectTo }
     });
     if (error) {
@@ -517,13 +532,25 @@ function AuthScreen() {
     setSending(false);
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') sendMagicLink();
+  };
+
   return (
     <div className="auth-screen">
       <div className="auth-card">
         <div className="auth-logo">INFINITY LOG</div>
         <div className="auth-sub">PERSONAL TIMELINE</div>
-        <div className="auth-email-display">{OWNER_EMAIL}</div>
-        <button className="auth-btn" onClick={sendMagicLink} disabled={sending}>
+        <input
+          type="email"
+          className="auth-email-input"
+          placeholder="your@email.com"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          onKeyDown={handleKeyDown}
+          autoFocus
+        />
+        <button className="auth-btn" onClick={sendMagicLink} disabled={sending || !email.trim()}>
           {sending ? 'SENDING...' : 'SEND MAGIC LINK'}
         </button>
         <div className="auth-msg">{msg}</div>
