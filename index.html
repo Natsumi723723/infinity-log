@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>INFINITY LOG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root {
+    --pink: #E91E8C;
+    --magenta: #FF00FF;
+    --cyan: #00FFFF;
+    --bg: #07000F;
+    --bg2: #0D0020;
+    --surface: #110028;
+    --border: rgba(233,30,140,0.3);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: var(--bg);
+    font-family: 'Rajdhani', sans-serif;
+    color: #f0e6ff;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(233,30,140,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(233,30,140,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 800px;
+    height: 400px;
+    background: radial-gradient(ellipse, rgba(233,30,140,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #root { position: relative; z-index: 1; }
+
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: linear-gradient(180deg, #07000F 0%, rgba(7,0,15,0.95) 100%);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+  }
+
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--pink), var(--magenta), var(--pink), transparent);
+    box-shadow: 0 0 12px var(--pink), 0 0 24px rgba(233,30,140,0.5);
+  }
+
+  .header-inner {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    color: var(--pink);
+    text-shadow: 0 0 10px var(--magenta), 0 0 20px rgba(255,0,255,0.4);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan), 0 0 16px var(--cyan);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.6); }
+  }
+
+  .sync-status {
+    font-family: 'Orbitron', monospace;
+    font-size: 8px;
+    letter-spacing: 0.15em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .sync-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+  }
+
+  .sync-dot.synced { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+  .sync-dot.syncing { background: var(--pink); box-shadow: 0 0 6px var(--pink); animation: pulse-dot 0.8s ease-in-out infinite; }
+  .sync-dot.offline { background: rgba(240,230,255,0.2); }
+
+  /* ====== AUTH SCREEN ====== */
+  .auth-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .auth-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 40px 32px;
+    width: 100%;
+    max-width: 360px;
+    box-shadow: 0 0 40px rgba(233,30,140,0.15), inset 0 0 40px rgba(233,30,140,0.03);
+    text-align: center;
+  }
+
+  .auth-logo {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: 18px;
+    letter-spacing: 0.4em;
+    color: var(--pink);
+    text-shadow: 0 0 20px var(--magenta);
+    margin-bottom: 8px;
+  }
+
+  .auth-sub {
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    color: rgba(240,230,255,0.35);
+    margin-bottom: 32px;
+    font-family: 'Orbitron', monospace;
+  }
+
+  .auth-email-display {
+    font-size: 13px;
+    color: rgba(240,230,255,0.6);
+    margin-bottom: 24px;
+    letter-spacing: 0.05em;
+  }
+
+  .auth-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--pink), var(--magenta));
+    border: none;
+    border-radius: 2px;
+    color: white;
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 20px rgba(233,30,140,0.4);
+  }
+
+  .auth-btn:hover {
+    box-shadow: 0 0 30px rgba(233,30,140,0.7), 0 0 60px rgba(255,0,255,0.3);
+    transform: translateY(-1px);
+  }
+
+  .auth-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .auth-msg {
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--cyan);
+    text-shadow: 0 0 8px var(--cyan);
+    letter-spacing: 0.05em;
+    min-height: 20px;
+  }
+
+  /* ====== INPUT AREA ====== */
+  .input-wrapper {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 16px 24px;
+  }
+
+  .input-container {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+
+  .input-container.focused {
+    border-color: transparent;
+    box-shadow:
+      0 0 0 1px var(--pink),
+      0 0 20px rgba(233,30,140,0.4),
+      0 0 40px rgba(255,0,255,0.2),
+      inset 0 0 30px rgba(233,30,140,0.05);
+  }
+
+  .input-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px 0;
+  }
+
+  .input-meta-date {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--pink);
+    opacity: 0.7;
+  }
+
+  textarea.log-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+    color: #f0e6ff;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+    padding: 8px 14px 14px;
+    min-height: 60px;
+    caret-color: var(--pink);
+  }
+
+  textarea.log-input::placeholder {
+    color: rgba(240,230,255,0.2);
+    font-style: italic;
+    font-weight: 300;
+  }
+
+  .input-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 14px 10px;
+    border-top: 1px solid rgba(233,30,140,0.1);
+  }
+
+  .hint-text {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: rgba(240,230,255,0.2);
+    font-family: 'Orbitron', monospace;
+  }
+
+  .saved-indicator {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--cyan);
+    text-shadow: 0 0 8px var(--cyan);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .saved-indicator.visible { opacity: 1; }
+
+  /* ====== TIMELINE ====== */
+  .timeline {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 8px 24px 80px;
+  }
+
+  .date-divider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 28px 0 14px;
+  }
+
+  .date-divider:first-child { margin-top: 0; }
+
+  .date-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    color: var(--pink);
+    text-shadow: 0 0 10px rgba(233,30,140,0.8);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .date-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--pink), rgba(255,0,255,0.3), transparent);
+    box-shadow: 0 0 6px rgba(233,30,140,0.5);
+  }
+
+  .date-badge {
+    font-family: 'Orbitron', monospace;
+    font-size: 8px;
+    letter-spacing: 0.15em;
+    color: var(--magenta);
+    border: 1px solid rgba(255,0,255,0.3);
+    padding: 2px 8px;
+    border-radius: 2px;
+    text-shadow: 0 0 6px var(--magenta);
+    flex-shrink: 0;
+  }
+
+  .memo-card {
+    position: relative;
+    background: linear-gradient(135deg, rgba(17,0,40,0.9) 0%, rgba(13,0,32,0.9) 100%);
+    border: 1px solid rgba(233,30,140,0.15);
+    border-left: 2px solid var(--pink);
+    border-radius: 0 4px 4px 0;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    transition: all 0.25s ease;
+    overflow: hidden;
+  }
+
+  .memo-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(233,30,140,0.03) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .memo-card:hover {
+    border-left-color: var(--magenta);
+    border-color: rgba(233,30,140,0.3);
+    box-shadow: 0 0 20px rgba(233,30,140,0.1);
+    transform: translateX(2px);
+  }
+
+  .memo-time {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: rgba(233,30,140,0.6);
+    margin-bottom: 8px;
+  }
+
+  .memo-text {
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.65;
+    letter-spacing: 0.02em;
+    color: rgba(240,230,255,0.88);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-12px); filter: blur(2px); }
+    to   { opacity: 1; transform: translateY(0);     filter: blur(0); }
+  }
+
+  .memo-card.new-entry {
+    animation: slideDown 0.35s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  .loading-state {
+    text-align: center;
+    padding: 60px 24px;
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: rgba(233,30,140,0.5);
+  }
+
+  @keyframes glitch {
+    0%, 90%, 100% { clip-path: none; transform: none; }
+    91% { clip-path: polygon(0 30%, 100% 30%, 100% 50%, 0 50%); transform: translate(-2px, 0); }
+    92% { clip-path: polygon(0 60%, 100% 60%, 100% 75%, 0 75%); transform: translate(2px, 0); }
+    93% { clip-path: none; transform: none; }
+  }
+
+  .logo-text { display: inline-block; animation: glitch 8s ease-in-out infinite; }
+
+  .scanlines {
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--pink); box-shadow: 0 0 6px var(--magenta); border-radius: 2px; }
+
+  @media (max-width: 600px) {
+    .header-inner, .input-wrapper, .timeline { padding-left: 16px; padding-right: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useRef, useEffect, useCallback } = React;
+
+/* ── Supabase ── */
+const SB_URL = "https://gjcbtolotqywzdggckto.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqY2J0b2xvdHF5d3pkZ2dja3RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0NzU4MzIsImV4cCI6MjA5NjA1MTgzMn0.dnMQl7cB5H7MGz0Nuh8PibQuYa1iYYmauJEhrlfyDBc";
+const OWNER_EMAIL = "sweet.summer.fruit.723@gmail.com";
+const sb = supabase.createClient(SB_URL, SB_KEY, {
+  auth: { persistSession: true, detectSessionInUrl: true, autoRefreshToken: true }
+});
+
+/* ── Helpers ── */
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function formatDate(ts) {
+  const d = new Date(ts);
+  return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} ${DAYS[d.getDay()]}`;
+}
+function formatTime(ts) {
+  const d = new Date(ts);
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function dateKey(ts) {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+function nowFormatted() {
+  const d = new Date();
+  return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} ${DAYS[d.getDay()]}`;
+}
+
+/* ── Components ── */
+function MemoCard({ memo, isNew }) {
+  return (
+    <div className={`memo-card ${isNew ? 'new-entry' : ''}`}>
+      <div className="memo-time">{formatTime(memo.created_at)}</div>
+      <div className="memo-text">{memo.text}</div>
+    </div>
+  );
+}
+
+function DateDivider({ dateStr, isToday }) {
+  return (
+    <div className="date-divider">
+      <span className="date-label">{dateStr}</span>
+      <div className="date-line" />
+      {isToday && <span className="date-badge">TODAY</span>}
+    </div>
+  );
+}
+
+function AuthScreen() {
+  const [sending, setSending] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  const sendMagicLink = async () => {
+    setSending(true);
+    setMsg('');
+    const redirectTo = window.location.href.split('?')[0].split('#')[0];
+    const { error } = await sb.auth.signInWithOtp({
+      email: OWNER_EMAIL,
+      options: { emailRedirectTo: redirectTo }
+    });
+    if (error) {
+      setMsg('エラー: ' + error.message);
+    } else {
+      setMsg('メールを送りました。リンクをクリックしてログイン ✓');
+    }
+    setSending(false);
+  };
+
+  return (
+    <div className="auth-screen">
+      <div className="auth-card">
+        <div className="auth-logo">INFINITY LOG</div>
+        <div className="auth-sub">PERSONAL TIMELINE</div>
+        <div className="auth-email-display">{OWNER_EMAIL}</div>
+        <button className="auth-btn" onClick={sendMagicLink} disabled={sending}>
+          {sending ? 'SENDING...' : 'SEND MAGIC LINK'}
+        </button>
+        <div className="auth-msg">{msg}</div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [session, setSession] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [memos, setMemos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [draft, setDraft] = useState('');
+  const [focused, setFocused] = useState(false);
+  const [savedVisible, setSavedVisible] = useState(false);
+  const [syncStatus, setSyncStatus] = useState('offline'); // offline | syncing | synced
+  const [newIds, setNewIds] = useState(new Set());
+  const textareaRef = useRef(null);
+  const debounceRef = useRef(null);
+  const savedTimerRef = useRef(null);
+
+  /* Auth */
+  useEffect(() => {
+    sb.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setAuthChecked(true);
+    });
+    const { data: { subscription } } = sb.auth.onAuthStateChange((_e, session) => {
+      setSession(session);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  /* Fetch memos */
+  useEffect(() => {
+    if (!session) return;
+    setLoading(true);
+    sb.from('diary_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (!error && data) setMemos(data);
+        setLoading(false);
+        setSyncStatus('synced');
+      });
+
+    /* Realtime */
+    const channel = sb.channel('diary_realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'diary_logs' }, payload => {
+        setMemos(prev => [payload.new, ...prev]);
+      })
+      .subscribe();
+    return () => sb.removeChannel(channel);
+  }, [session]);
+
+  /* Auto-resize textarea */
+  useEffect(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = 'auto';
+    ta.style.height = Math.max(60, ta.scrollHeight) + 'px';
+  }, [draft]);
+
+  const commitMemo = useCallback(async () => {
+    if (!draft.trim()) return;
+    const text = draft.trim();
+    setDraft('');
+    setSyncStatus('syncing');
+
+    const { data, error } = await sb.from('diary_logs').insert({ text }).select().single();
+    if (!error && data) {
+      setMemos(prev => {
+        // avoid duplicate from realtime
+        if (prev.find(m => m.id === data.id)) return prev;
+        return [data, ...prev];
+      });
+      setNewIds(prev => new Set([...prev, data.id]));
+      setTimeout(() => {
+        setNewIds(prev => { const n = new Set(prev); n.delete(data.id); return n; });
+      }, 500);
+    }
+    setSyncStatus('synced');
+    setSavedVisible(true);
+    clearTimeout(savedTimerRef.current);
+    savedTimerRef.current = setTimeout(() => setSavedVisible(false), 2000);
+  }, [draft]);
+
+  const handleKeyDown = (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      clearTimeout(debounceRef.current);
+      commitMemo();
+    }
+  };
+
+  const handleChange = (e) => {
+    setDraft(e.target.value);
+    clearTimeout(debounceRef.current);
+    if (e.target.value.trim()) {
+      debounceRef.current = setTimeout(() => commitMemo(), 2000);
+    }
+  };
+
+  /* Group by date */
+  const groupMap = {};
+  memos.forEach(m => {
+    const key = dateKey(m.created_at);
+    if (!groupMap[key]) groupMap[key] = { key, dateStr: formatDate(m.created_at), memos: [] };
+    groupMap[key].memos.push(m);
+  });
+  const sortedGroups = Object.values(groupMap).sort((a,b) =>
+    new Date(b.memos[0].created_at) - new Date(a.memos[0].created_at)
+  );
+  const todayKey = dateKey(Date.now());
+
+  const syncLabel = { offline: 'OFFLINE', syncing: 'SYNC...', synced: 'SYNCED' };
+  const syncColor = { offline: 'rgba(240,230,255,0.2)', syncing: 'var(--pink)', synced: 'var(--cyan)' };
+
+  if (!authChecked) return null;
+  if (!session) return <AuthScreen />;
+
+  return (
+    <>
+      <header className="header">
+        <div className="header-inner">
+          <div className="logo">
+            <span className="logo-dot" />
+            <span className="logo-text">INFINITY LOG</span>
+          </div>
+          <div className="sync-status" style={{ color: syncColor[syncStatus] }}>
+            <span className={`sync-dot ${syncStatus}`} />
+            {syncLabel[syncStatus]}
+          </div>
+        </div>
+
+        <div className="input-wrapper">
+          <div className={`input-container ${focused ? 'focused' : ''}`}>
+            <div className="input-meta">
+              <span className="input-meta-date">{nowFormatted()}</span>
+            </div>
+            <textarea
+              ref={textareaRef}
+              className="log-input"
+              placeholder="今、ここに何かを残す…"
+              value={draft}
+              onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              onFocus={() => setFocused(true)}
+              onBlur={() => {
+                setFocused(false);
+                if (draft.trim()) {
+                  clearTimeout(debounceRef.current);
+                  commitMemo();
+                }
+              }}
+            />
+            <div className="input-footer">
+              <span className="hint-text">⌘ + ENTER to commit</span>
+              <span className={`saved-indicator ${savedVisible ? 'visible' : ''}`}>
+                ◆ SAVED
+              </span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="timeline">
+        {loading ? (
+          <div className="loading-state">LOADING...</div>
+        ) : sortedGroups.map(group => (
+          <div key={group.key}>
+            <DateDivider dateStr={group.dateStr} isToday={group.key === todayKey} />
+            {group.memos.map(memo => (
+              <MemoCard key={memo.id} memo={memo} isNew={newIds.has(memo.id)} />
+            ))}
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
