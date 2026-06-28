@@ -297,86 +297,74 @@
 
   .input-container {
     position: relative;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    transition: all 0.3s ease, var(--theme-transition);
-    overflow: hidden;
+    background: var(--memo-bg);
+    border: 1px solid var(--memo-border);
+    border-radius: 2px;
+    padding: 14px 16px 10px;
+    transition: var(--theme-transition), border-color 0.2s, box-shadow 0.2s;
   }
 
   .input-container.focused {
-    border-color: transparent;
-    box-shadow:
-      0 0 0 1px var(--pink),
-      0 0 20px rgba(233,30,140,0.4),
-      0 0 40px rgba(255,0,255,0.2),
-      inset 0 0 30px rgba(233,30,140,0.05);
+    border-color: rgba(233,30,140,0.4);
+    box-shadow: 0 0 20px rgba(233,30,140,0.1);
   }
 
   .input-meta {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 14px 0;
+    gap: 8px;
+    margin-bottom: 8px;
   }
 
   .input-meta-date {
     font-family: 'Orbitron', monospace;
-    font-size: 9px;
+    font-size: 8px;
     letter-spacing: 0.2em;
     color: var(--pink);
-    opacity: 0.7;
+    text-shadow: 0 0 8px rgba(233,30,140,0.5);
   }
 
-  textarea.log-input {
+  .log-input {
     width: 100%;
     background: transparent;
     border: none;
-    outline: none;
-    resize: none;
     color: var(--text);
     font-family: 'Rajdhani', sans-serif;
     font-size: 16px;
-    font-weight: 500;
-    line-height: 1.6;
+    font-weight: 400;
     letter-spacing: 0.02em;
-    padding: 8px 14px 14px;
+    line-height: 1.6;
+    resize: none;
+    outline: none;
     min-height: 60px;
     caret-color: var(--pink);
+    transition: color 0.35s ease;
   }
 
-  textarea.log-input::placeholder {
-    color: var(--text-muted);
-    font-style: italic;
-    font-weight: 300;
-  }
+  .log-input::placeholder { color: var(--text-muted); }
 
   .input-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 6px 14px 10px;
-    border-top: 1px solid rgba(233,30,140,0.1);
+    margin-top: 8px;
   }
 
   .hint-text {
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
     font-family: 'Orbitron', monospace;
+    font-size: 7px;
+    letter-spacing: 0.2em;
+    color: var(--text-muted);
   }
 
   .saved-indicator {
     font-family: 'Orbitron', monospace;
-    font-size: 9px;
-    letter-spacing: 0.2em;
+    font-size: 7px;
+    letter-spacing: 0.3em;
     color: var(--cyan);
     text-shadow: 0 0 8px var(--cyan);
     opacity: 0;
-    transition: opacity 0.4s ease;
-    display: flex;
-    align-items: center;
-    gap: 4px;
+    transition: opacity 0.3s ease;
   }
 
   .saved-indicator.visible { opacity: 1; }
@@ -391,19 +379,15 @@
   .date-divider {
     display: flex;
     align-items: center;
-    gap: 14px;
-    margin: 28px 0 14px;
+    gap: 12px;
+    padding: 20px 0 8px;
   }
-
-  .date-divider:first-child { margin-top: 0; }
 
   .date-label {
     font-family: 'Orbitron', monospace;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.3em;
-    color: var(--pink);
-    text-shadow: 0 0 10px rgba(233,30,140,0.8);
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    color: var(--text-sub);
     white-space: nowrap;
     flex-shrink: 0;
   }
@@ -411,142 +395,123 @@
   .date-line {
     flex: 1;
     height: 1px;
-    background: linear-gradient(90deg, var(--pink), rgba(255,0,255,0.3), transparent);
-    box-shadow: 0 0 6px rgba(233,30,140,0.5);
+    background: linear-gradient(90deg, var(--border), transparent);
   }
 
   .date-badge {
     font-family: 'Orbitron', monospace;
-    font-size: 8px;
-    letter-spacing: 0.15em;
-    color: var(--magenta);
-    border: 1px solid rgba(255,0,255,0.3);
-    padding: 2px 8px;
-    border-radius: 2px;
-    text-shadow: 0 0 6px var(--magenta);
+    font-size: 7px;
+    letter-spacing: 0.25em;
+    color: var(--pink);
+    text-shadow: 0 0 8px var(--pink);
+    border: 1px solid rgba(233,30,140,0.3);
+    padding: 2px 6px;
+    border-radius: 1px;
     flex-shrink: 0;
   }
 
+  /* ====== MEMO CARD ====== */
   .memo-card {
-    position: relative;
     background: var(--memo-bg);
     border: 1px solid var(--memo-border);
-    border-left: 2px solid var(--pink);
-    border-radius: 0 4px 4px 0;
-    padding: 14px 16px;
-    margin-bottom: 8px;
-    transition: all 0.25s ease, var(--theme-transition);
-    overflow: hidden;
-  }
-
-  .memo-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(233,30,140,0.03) 0%, transparent 60%);
-    pointer-events: none;
+    border-radius: 2px;
+    padding: 12px 16px 10px;
+    margin-bottom: 6px;
+    transition: var(--theme-transition), border-color 0.2s, box-shadow 0.2s;
+    cursor: text;
   }
 
   .memo-card:hover {
-    border-left-color: var(--magenta);
-    border-color: rgba(233,30,140,0.3);
-    box-shadow: 0 0 20px rgba(233,30,140,0.08);
-    transform: translateX(2px);
+    border-color: rgba(233,30,140,0.25);
+    box-shadow: 0 0 12px rgba(233,30,140,0.06);
   }
 
   .memo-card.editing {
-    border-left-color: var(--cyan);
-    border-color: rgba(0,255,255,0.3);
-    box-shadow: 0 0 20px rgba(0,255,255,0.15);
-    transform: none;
+    border-color: rgba(233,30,140,0.4);
+    box-shadow: 0 0 20px rgba(233,30,140,0.1);
   }
 
-  textarea.memo-edit-input {
+  .memo-time {
+    font-family: 'Orbitron', monospace;
+    font-size: 8px;
+    letter-spacing: 0.2em;
+    color: var(--text-sub);
+    margin-bottom: 6px;
+  }
+
+  .memo-text {
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    transition: color 0.35s ease;
+  }
+
+  .memo-edit-input {
     width: 100%;
     background: transparent;
     border: none;
-    outline: none;
-    resize: none;
     color: var(--text);
     font-family: 'Rajdhani', sans-serif;
     font-size: 15px;
-    font-weight: 500;
-    line-height: 1.65;
+    font-weight: 400;
     letter-spacing: 0.02em;
-    caret-color: var(--cyan);
-    padding: 0;
+    line-height: 1.65;
+    resize: none;
+    outline: none;
+    caret-color: var(--pink);
+    min-height: 40px;
+    transition: color 0.35s ease;
   }
 
   .memo-edit-footer {
     display: flex;
     align-items: center;
+    gap: 8px;
+    margin-top: 8px;
     justify-content: flex-end;
-    gap: 10px;
-    margin-top: 10px;
-    padding-top: 8px;
-    border-top: 1px solid rgba(0,255,255,0.15);
   }
 
   .edit-hint {
     font-family: 'Orbitron', monospace;
-    font-size: 8px;
+    font-size: 7px;
     letter-spacing: 0.15em;
-    color: rgba(0,255,255,0.4);
-    flex: 1;
+    color: var(--text-muted);
+    margin-right: auto;
+  }
+
+  .edit-cancel-btn, .edit-save-btn {
+    font-family: 'Orbitron', monospace;
+    font-size: 8px;
+    letter-spacing: 0.2em;
+    padding: 4px 10px;
+    border-radius: 1px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid;
   }
 
   .edit-cancel-btn {
-    font-family: 'Orbitron', monospace;
-    font-size: 8px;
-    letter-spacing: 0.15em;
-    color: var(--text-sub);
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 4px 8px;
+    background: transparent;
+    border-color: var(--text-muted);
+    color: var(--text-muted);
   }
+
+  .edit-cancel-btn:hover { border-color: var(--text-sub); color: var(--text-sub); }
 
   .edit-save-btn {
-    font-family: 'Orbitron', monospace;
-    font-size: 8px;
-    letter-spacing: 0.15em;
-    color: var(--cyan);
-    text-shadow: 0 0 6px var(--cyan);
-    background: none;
-    border: 1px solid rgba(0,255,255,0.3);
-    border-radius: 2px;
-    cursor: pointer;
-    padding: 4px 10px;
-    transition: all 0.2s;
+    background: linear-gradient(135deg, var(--pink), var(--magenta));
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 0 10px rgba(233,30,140,0.3);
   }
 
-  .edit-save-btn:hover {
-    background: rgba(0,255,255,0.1);
-    box-shadow: 0 0 8px rgba(0,255,255,0.3);
-  }
-
-  .memo-time {
-    font-family: 'Orbitron', monospace;
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    color: var(--pink);
-    opacity: 0.85;
-    margin-bottom: 8px;
-  }
-
-  .memo-text {
-    font-size: 15px;
-    font-weight: 500;
-    line-height: 1.65;
-    letter-spacing: 0.02em;
-    color: var(--text);
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
+  .edit-save-btn:hover { box-shadow: 0 0 16px rgba(233,30,140,0.6); }
 
   @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-12px); filter: blur(2px); }
-    to   { opacity: 1; transform: translateY(0);     filter: blur(0); }
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .memo-card.new-entry {
@@ -590,6 +555,342 @@
   @media (max-width: 600px) {
     .header-inner, .input-wrapper, .timeline { padding-left: 16px; padding-right: 16px; }
   }
+
+  /* ====== MEMO CARD FOOTER ====== */
+  .memo-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-top: 8px;
+  }
+
+  .reply-btn {
+    background: none;
+    border: 1px solid var(--memo-border);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 11px;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+    font-family: 'Rajdhani', sans-serif;
+    letter-spacing: 0.05em;
+  }
+
+  .reply-btn:hover {
+    border-color: var(--pink);
+    color: var(--pink);
+    box-shadow: 0 0 8px rgba(233,30,140,0.2);
+  }
+
+  .reply-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ====== AI BUBBLE ====== */
+  @keyframes bubbleIn {
+    from { opacity: 0; transform: translateY(6px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .ai-bubble-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 10px;
+    animation: bubbleIn 0.3s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  .ai-bubble-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 2px solid rgba(233,30,140,0.3);
+    box-shadow: 0 0 10px rgba(233,30,140,0.2);
+    cursor: pointer;
+    position: relative;
+  }
+
+  .ai-bubble-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .ai-bubble-icon-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(233,30,140,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .ai-bubble-icon:hover .ai-bubble-icon-overlay { opacity: 1; }
+
+  .ai-bubble-body {
+    flex: 1;
+  }
+
+  .ai-bubble-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 8px;
+    letter-spacing: 0.15em;
+    color: var(--pink);
+    margin-bottom: 4px;
+  }
+
+  .ai-bubble-text {
+    background: rgba(233,30,140,0.06);
+    border: 1px solid rgba(233,30,140,0.15);
+    border-radius: 0 8px 8px 8px;
+    padding: 8px 12px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    position: relative;
+  }
+
+  .ai-bubble-text::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -6px;
+    width: 0;
+    height: 0;
+    border-top: 6px solid rgba(233,30,140,0.15);
+    border-left: 6px solid transparent;
+  }
+
+  .ai-bubble-loading {
+    display: flex;
+    gap: 4px;
+    padding: 4px 0;
+  }
+
+  .ai-bubble-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--pink);
+    animation: dotBounce 1.2s ease-in-out infinite;
+  }
+
+  .ai-bubble-dot:nth-child(2) { animation-delay: 0.2s; }
+  .ai-bubble-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes dotBounce {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  /* ====== PERSONA PANEL ====== */
+  .persona-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    z-index: 200;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(233,30,140,0.1);
+    animation: bubbleIn 0.2s ease forwards;
+    min-width: 200px;
+  }
+
+  .persona-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    border: 1px solid transparent;
+  }
+
+  .persona-item:hover { background: rgba(233,30,140,0.08); }
+
+  .persona-item.active {
+    background: rgba(233,30,140,0.12);
+    border-color: rgba(233,30,140,0.3);
+  }
+
+  .persona-item-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid rgba(233,30,140,0.2);
+    position: relative;
+  }
+
+  .persona-item-icon img,
+  .persona-item-icon svg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .persona-item-name {
+    font-size: 9px;
+    letter-spacing: 0.05em;
+    color: var(--text-sub);
+    text-align: center;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+  }
+
+  .persona-item.active .persona-item-name { color: var(--pink); }
+
+  /* ====== SETTINGS MODAL ====== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .modal-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px 24px;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 0 40px rgba(233,30,140,0.2);
+    animation: bubbleIn 0.25s ease forwards;
+  }
+
+  .modal-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    color: var(--pink);
+    margin-bottom: 6px;
+  }
+
+  .modal-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  .modal-input {
+    width: 100%;
+    background: rgba(233,30,140,0.04);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    padding: 10px 12px;
+    outline: none;
+    margin-bottom: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    caret-color: var(--pink);
+  }
+
+  .modal-input:focus {
+    border-color: var(--pink);
+    box-shadow: 0 0 10px rgba(233,30,140,0.2);
+  }
+
+  .modal-input::placeholder { color: var(--text-muted); }
+
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .modal-cancel-btn {
+    background: transparent;
+    border: 1px solid var(--text-muted);
+    border-radius: 4px;
+    color: var(--text-muted);
+    font-family: 'Orbitron', monospace;
+    font-size: 8px;
+    letter-spacing: 0.2em;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .modal-cancel-btn:hover { border-color: var(--text-sub); color: var(--text-sub); }
+
+  .modal-save-btn {
+    background: linear-gradient(135deg, var(--pink), var(--magenta));
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-family: 'Orbitron', monospace;
+    font-size: 8px;
+    letter-spacing: 0.2em;
+    padding: 8px 14px;
+    cursor: pointer;
+    box-shadow: 0 0 14px rgba(233,30,140,0.4);
+    transition: box-shadow 0.15s;
+  }
+
+  .modal-save-btn:hover { box-shadow: 0 0 20px rgba(233,30,140,0.7); }
+
+  /* ====== ACTIVE PERSONA BUTTON ====== */
+  .persona-active-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid rgba(233,30,140,0.4);
+    cursor: pointer;
+    flex-shrink: 0;
+    box-shadow: 0 0 10px rgba(233,30,140,0.25);
+    transition: box-shadow 0.2s, border-color 0.2s;
+  }
+
+  .persona-active-btn:hover {
+    border-color: var(--pink);
+    box-shadow: 0 0 16px rgba(233,30,140,0.5);
+  }
+
+  .settings-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .settings-btn:hover {
+    border-color: var(--pink);
+    box-shadow: 0 0 10px rgba(233,30,140,0.35);
+  }
 </style>
 </head>
 <body>
@@ -601,12 +902,159 @@
 <script type="text/babel">
 const { useState, useRef, useEffect, useCallback } = React;
 
+/* ── Demo mode (localhost only) ── */
+const DEMO_MODE = location.hostname === 'localhost' || location.hostname === '192.168.1.7';
+const DEMO_MEMOS = [
+  { id: '1', text: '今日めっちゃ眠い…でもやること多い', created_at: new Date(Date.now() - 3600000).toISOString(), user_id: 'demo' },
+  { id: '2', text: '新しいアイデア思いついた！PINKで世界変えてく', created_at: new Date(Date.now() - 7200000).toISOString(), user_id: 'demo' },
+  { id: '3', text: 'カフェで作業してたら隣の人のコーデがおしゃれすぎた', created_at: new Date(Date.now() - 86400000).toISOString(), user_id: 'demo' },
+];
+
 /* ── Supabase ── */
 const SB_URL = "https://gjcbtolotqywzdggckto.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqY2J0b2xvdHF5d3pkZ2dja3RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0NzU4MzIsImV4cCI6MjA5NjA1MTgzMn0.dnMQl7cB5H7MGz0Nuh8PibQuYa1iYYmauJEhrlfyDBc";
 const sb = supabase.createClient(SB_URL, SB_KEY, {
   auth: { persistSession: true, detectSessionInUrl: true, autoRefreshToken: true }
 });
+
+/* ── Character definitions ── */
+const CHARACTERS = {
+  heartrun: {
+    name: 'ハートるん',
+    system: `あなたは「ハートるん」というキャラクターです。
+明るくて軽いノリで、すぐ「バタン」と寝込む。
+友達のつぶやきを読んで、ひと言リアクションを返してください。
+・60文字以内で返す
+・語尾に「バタン」「眠い」「でも元気！」など寝落ちしそうな表現を自然に入れる
+・明るくポジティブ
+・ハートのemoji♡を使う
+日本語で答えてください。`,
+  },
+  kyurun: {
+    name: 'キュルるん',
+    system: `あなたは「キュルるん」というキャラクターです。
+常に恋とトキメキを探している乙女キャラ。
+友達のつぶやきを読んで、ひと言リアクションを返してください。
+・60文字以内で返す
+・恋愛的な視点でリアクションする（なんでも恋に結びつけてOK）
+・「トキメキ」「きゅん」「♡」などの表現を使う
+・乙女口調
+日本語で答えてください。`,
+  },
+  matomom: {
+    name: 'マトモん',
+    system: `あなたは「マトモん」というキャラクターです。
+双子の兄で、正論と知識で物事を分析する真面目キャラ。
+友達のつぶやきを読んで、ひと言リアクションを返してください。
+・60文字以内で返す
+・的確な分析や知識を端的にコメントする
+・「つまり」「正確には」「根拠としては」などの表現を使う
+・堅いが押しつけがましくない
+日本語で答えてください。`,
+  },
+  charaon: {
+    name: 'チャラおん',
+    system: `あなたは「チャラおん」というキャラクターです。
+双子の兄で、チャラくて陽気、人を盛り上げるのが得意なキャラ。
+友達のつぶやきを読んで、ひと言リアクションを返してください。
+・60文字以内で返す
+・超ポジティブにノリよくリアクション
+・「それな！」「やばくない？」「いけいけ！」などのチャラい表現を使う
+・最後にハイテンションで締める
+日本語で答えてください。`,
+  },
+  mutan: {
+    name: 'むーたん',
+    system: `あなたは「むーたん」というキャラクターです。
+無表情で寡黙だけど実は情が深いキャラ。
+友達のつぶやきを読んで、ひと言リアクションを返してください。
+・30文字以内（とにかく短く）
+・無表情だけど本質をついた一言
+・「…」から始めてもいい
+・感情を抑えた表現だけど、見えないところに優しさがある
+日本語で答えてください。`,
+  },
+  shairun: {
+    name: 'シャイるん',
+    system: `あなたは「シャイるん」というキャラクターです。
+シャイな女の子だけどよく人を観察していて核心をつく。
+友達のつぶやきを読んで、ひと言リアクションを返してください。
+・60文字以内で返す
+・照れながらも本質的なコメント
+・「み、見てたんだけど…」「え、えっと…」などシャイな言い回しを入れる
+・最後に核心をそっと言う
+日本語で答えてください。`,
+  },
+};
+
+/* ── Character SVG icons ── */
+function HeartSVG({ id, size = 44 }) {
+  const expressions = {
+    heartrun: (
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width={size} height={size}>
+        <rect width="100" height="100" fill="#FF69B4"/>
+        <path d="M50 75 C50 75 20 55 20 35 C20 25 27 18 35 18 C41 18 47 22 50 27 C53 22 59 18 65 18 C73 18 80 25 80 35 C80 55 50 75 50 75Z" fill="white" opacity="0.9"/>
+        <text x="35" y="46" fontSize="12" fill="#E91E8C" fontWeight="bold">×</text>
+        <text x="53" y="46" fontSize="12" fill="#E91E8C" fontWeight="bold">×</text>
+        <path d="M42 56 Q50 60 58 56" stroke="#E91E8C" strokeWidth="2" fill="none" strokeLinecap="round"/>
+        <text x="32" y="84" fontSize="8" fill="white" fontFamily="sans-serif">zzz</text>
+      </svg>
+    ),
+    kyurun: (
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width={size} height={size}>
+        <rect width="100" height="100" fill="#FF1493"/>
+        <path d="M50 75 C50 75 20 55 20 35 C20 25 27 18 35 18 C41 18 47 22 50 27 C53 22 59 18 65 18 C73 18 80 25 80 35 C80 55 50 75 50 75Z" fill="white" opacity="0.9"/>
+        <text x="30" y="48" fontSize="14" fill="#E91E8C">♡</text>
+        <text x="50" y="48" fontSize="14" fill="#E91E8C">♡</text>
+        <path d="M42 56 Q50 62 58 56" stroke="#E91E8C" strokeWidth="2" fill="none" strokeLinecap="round"/>
+        <circle cx="67" cy="42" r="4" fill="#FFB0D8" opacity="0.8"/>
+      </svg>
+    ),
+    matomom: (
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width={size} height={size}>
+        <rect width="100" height="100" fill="#C2185B"/>
+        <path d="M50 75 C50 75 20 55 20 35 C20 25 27 18 35 18 C41 18 47 22 50 27 C53 22 59 18 65 18 C73 18 80 25 80 35 C80 55 50 75 50 75Z" fill="white" opacity="0.9"/>
+        <rect x="31" y="38" width="12" height="8" rx="2" fill="none" stroke="#C2185B" strokeWidth="2"/>
+        <rect x="52" y="38" width="12" height="8" rx="2" fill="none" stroke="#C2185B" strokeWidth="2"/>
+        <line x1="33" y1="42" x2="43" y2="42" stroke="#C2185B" strokeWidth="2"/>
+        <line x1="54" y1="42" x2="64" y2="42" stroke="#C2185B" strokeWidth="2"/>
+        <line x1="43" y1="40" x2="52" y2="40" stroke="#C2185B" strokeWidth="1.5"/>
+        <path d="M43 56 L57 56" stroke="#C2185B" strokeWidth="2" strokeLinecap="round"/>
+      </svg>
+    ),
+    charaon: (
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width={size} height={size}>
+        <rect width="100" height="100" fill="#E91E8C"/>
+        <path d="M50 75 C50 75 20 55 20 35 C20 25 27 18 35 18 C41 18 47 22 50 27 C53 22 59 18 65 18 C73 18 80 25 80 35 C80 55 50 75 50 75Z" fill="white" opacity="0.9"/>
+        <text x="30" y="48" fontSize="13" fill="#E91E8C">★</text>
+        <text x="51" y="48" fontSize="13" fill="#E91E8C">★</text>
+        <path d="M41 57 Q50 63 59 57" stroke="#E91E8C" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+        <text x="62" y="32" fontSize="10" fill="#E91E8C">✓</text>
+      </svg>
+    ),
+    mutan: (
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width={size} height={size}>
+        <rect width="100" height="100" fill="#880E4F"/>
+        <path d="M50 75 C50 75 20 55 20 35 C20 25 27 18 35 18 C41 18 47 22 50 27 C53 22 59 18 65 18 C73 18 80 25 80 35 C80 55 50 75 50 75Z" fill="white" opacity="0.9"/>
+        <line x1="32" y1="42" x2="43" y2="42" stroke="#880E4F" strokeWidth="2.5" strokeLinecap="round"/>
+        <line x1="53" y1="42" x2="64" y2="42" stroke="#880E4F" strokeWidth="2.5" strokeLinecap="round"/>
+        <line x1="43" y1="56" x2="57" y2="56" stroke="#880E4F" strokeWidth="2" strokeLinecap="round"/>
+      </svg>
+    ),
+    shairun: (
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width={size} height={size}>
+        <rect width="100" height="100" fill="#AD1457"/>
+        <path d="M50 75 C50 75 20 55 20 35 C20 25 27 18 35 18 C41 18 47 22 50 27 C53 22 59 18 65 18 C73 18 80 25 80 35 C80 55 50 75 50 75Z" fill="white" opacity="0.9"/>
+        <text x="31" y="48" fontSize="13" fill="#AD1457">&gt;</text>
+        <text x="53" y="48" fontSize="13" fill="#AD1457">&lt;</text>
+        <path d="M43 57 Q50 61 57 57" stroke="#AD1457" strokeWidth="2" fill="none" strokeLinecap="round"/>
+        <circle cx="33" cy="50" r="5" fill="#FFB0D8" opacity="0.7"/>
+        <circle cx="63" cy="50" r="5" fill="#FFB0D8" opacity="0.7"/>
+      </svg>
+    ),
+  };
+  return expressions[id] || expressions['heartrun'];
+}
 
 /* ── Helpers ── */
 const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -628,10 +1076,123 @@ function nowFormatted() {
   return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} ${DAYS[d.getDay()]}`;
 }
 
-/* ── Components ── */
-function MemoCard({ memo, isNew, onUpdate }) {
+/* ── AI Bubble ── */
+function AIBubble({ persona, text, loading, customIcon, onIconChange }) {
+  const char = CHARACTERS[persona];
+  const fileRef = useRef(null);
+
+  const handleLongPress = useCallback(() => {
+    fileRef.current?.click();
+  }, []);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => onIconChange(persona, ev.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div className="ai-bubble-wrapper">
+      <div
+        className="ai-bubble-icon"
+        onContextMenu={e => { e.preventDefault(); fileRef.current?.click(); }}
+        title="長押しでアイコン変更"
+      >
+        {customIcon
+          ? <img src={customIcon} alt={char.name} />
+          : <HeartSVG id={persona} size={40} />
+        }
+        <div className="ai-bubble-icon-overlay">✎</div>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
+      </div>
+      <div className="ai-bubble-body">
+        <div className="ai-bubble-name">{char.name}</div>
+        <div className="ai-bubble-text">
+          {loading ? (
+            <div className="ai-bubble-loading">
+              <div className="ai-bubble-dot" />
+              <div className="ai-bubble-dot" />
+              <div className="ai-bubble-dot" />
+            </div>
+          ) : text}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Persona Panel ── */
+function PersonaPanel({ active, onSelect, customIcons, onIconChange }) {
+  return (
+    <div className="persona-panel">
+      {Object.entries(CHARACTERS).map(([id, char]) => (
+        <div
+          key={id}
+          className={`persona-item ${active === id ? 'active' : ''}`}
+          onClick={() => onSelect(id)}
+        >
+          <div className="persona-item-icon">
+            {customIcons[id]
+              ? <img src={customIcons[id]} alt={char.name} />
+              : <HeartSVG id={id} size={44} />
+            }
+          </div>
+          <div className="persona-item-name">{char.name}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Settings Modal ── */
+function SettingsModal({ apiKey, onSave, onClose }) {
+  const [val, setVal] = useState(apiKey || '');
+
+  const handleSave = () => {
+    onSave(val.trim());
+    onClose();
+  };
+
+  return (
+    <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="modal-card">
+        <div className="modal-title">AI SETTINGS</div>
+        <div className="modal-sub">
+          Anthropic APIキーを入力してください。<br/>
+          端末のlocalStorageにのみ保存されます。
+        </div>
+        <input
+          className="modal-input"
+          type="password"
+          placeholder="sk-ant-..."
+          value={val}
+          onChange={e => setVal(e.target.value)}
+          autoFocus
+          onKeyDown={e => e.key === 'Enter' && handleSave()}
+        />
+        <div className="modal-actions">
+          <button className="modal-cancel-btn" onClick={onClose}>CANCEL</button>
+          <button className="modal-save-btn" onClick={handleSave}>SAVE</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── MemoCard ── */
+function MemoCard({ memo, isNew, onUpdate, activePersona, apiKey, customIcons, onIconChange, onNeedApiKey }) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(memo.text);
+  const [aiReply, setAiReply] = useState(null);
+  const [replyLoading, setReplyLoading] = useState(false);
   const taRef = useRef(null);
 
   useEffect(() => {
@@ -666,6 +1227,37 @@ function MemoCard({ memo, isNew, onUpdate }) {
     e.target.style.height = e.target.scrollHeight + 'px';
   };
 
+  const getReply = async (e) => {
+    e.stopPropagation();
+    if (!apiKey) { onNeedApiKey(); return; }
+    if (aiReply) { setAiReply(null); return; }
+    setReplyLoading(true);
+    const char = CHARACTERS[activePersona];
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+          'anthropic-dangerous-allow-browser': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 150,
+          system: char.system,
+          messages: [{ role: 'user', content: memo.text }],
+        }),
+      });
+      const data = await res.json();
+      setAiReply(data.content?.[0]?.text || 'うまく答えられなかった…ごめんね');
+    } catch (err) {
+      console.error('AI reply error:', err);
+      setAiReply('エラー: ' + (err?.message || String(err)));
+    }
+    setReplyLoading(false);
+  };
+
   return (
     <div
       className={`memo-card ${isNew ? 'new-entry' : ''} ${editing ? 'editing' : ''}`}
@@ -690,12 +1282,36 @@ function MemoCard({ memo, isNew, onUpdate }) {
           </div>
         </>
       ) : (
-        <div className="memo-text">{memo.text}</div>
+        <>
+          <div className="memo-text">{memo.text}</div>
+          <div className="memo-card-footer" onClick={e => e.stopPropagation()}>
+            <button
+              className="reply-btn"
+              onClick={getReply}
+              disabled={replyLoading}
+            >
+              <span>💬</span>
+              <span>{aiReply ? '×' : CHARACTERS[activePersona].name}</span>
+            </button>
+          </div>
+          {(aiReply || replyLoading) && (
+            <div onClick={e => e.stopPropagation()}>
+              <AIBubble
+                persona={activePersona}
+                text={aiReply}
+                loading={replyLoading}
+                customIcon={customIcons[activePersona]}
+                onIconChange={onIconChange}
+              />
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 }
 
+/* ── DateDivider ── */
 function DateDivider({ dateStr, isToday }) {
   return (
     <div className="date-divider">
@@ -706,6 +1322,7 @@ function DateDivider({ dateStr, isToday }) {
   );
 }
 
+/* ── Auth Screen ── */
 function AuthScreen() {
   const [email, setEmail] = useState('');
   const [sending, setSending] = useState(false);
@@ -755,6 +1372,7 @@ function AuthScreen() {
   );
 }
 
+/* ── App ── */
 function App() {
   const [session, setSession] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
@@ -767,6 +1385,17 @@ function App() {
   const [newIds, setNewIds] = useState(new Set());
   const [theme, setTheme] = useState(() => localStorage.getItem('il-theme') || 'dark');
 
+  /* Persona & AI state */
+  const [activePersona, setActivePersona] = useState(() => localStorage.getItem('il-persona') || 'heartrun');
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('il-api-key') || '');
+  const [showSettings, setShowSettings] = useState(false);
+  const [showPersonaPanel, setShowPersonaPanel] = useState(false);
+  const [customIcons, setCustomIcons] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('il-icons') || '{}'); } catch { return {}; }
+  });
+
+  const headerRef = useRef(null);
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('il-theme', theme);
@@ -777,8 +1406,40 @@ function App() {
   const debounceRef = useRef(null);
   const savedTimerRef = useRef(null);
 
+  const selectPersona = (id) => {
+    setActivePersona(id);
+    localStorage.setItem('il-persona', id);
+    setShowPersonaPanel(false);
+  };
+
+  const saveApiKey = (key) => {
+    setApiKey(key);
+    localStorage.setItem('il-api-key', key);
+  };
+
+  const handleIconChange = (personaId, dataUrl) => {
+    const updated = { ...customIcons, [personaId]: dataUrl };
+    setCustomIcons(updated);
+    localStorage.setItem('il-icons', JSON.stringify(updated));
+  };
+
+  /* Close persona panel on outside click */
+  useEffect(() => {
+    if (!showPersonaPanel) return;
+    const handler = (e) => {
+      if (!headerRef.current?.contains(e.target)) setShowPersonaPanel(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showPersonaPanel]);
+
   /* Auth */
   useEffect(() => {
+    if (DEMO_MODE) {
+      setSession({ user: { id: 'demo', email: 'demo@localhost' } });
+      setAuthChecked(true);
+      return;
+    }
     sb.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setAuthChecked(true);
@@ -792,6 +1453,12 @@ function App() {
   /* Fetch memos */
   useEffect(() => {
     if (!session) return;
+    if (DEMO_MODE) {
+      setMemos(DEMO_MEMOS);
+      setLoading(false);
+      setSyncStatus('synced');
+      return;
+    }
     setLoading(true);
     sb.from('diary_logs')
       .select('*')
@@ -803,7 +1470,7 @@ function App() {
         setSyncStatus('synced');
       });
 
-    /* Realtime */
+    if (DEMO_MODE) return;
     const filter = `user_id=eq.${session.user.id}`;
     const channel = sb.channel('diary_realtime')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'diary_logs', filter }, payload => {
@@ -830,10 +1497,21 @@ function App() {
     setDraft('');
     setSyncStatus('syncing');
 
+    if (DEMO_MODE) {
+      const fake = { id: String(Date.now()), text, created_at: new Date().toISOString(), user_id: 'demo' };
+      setMemos(prev => [fake, ...prev]);
+      setNewIds(prev => new Set([...prev, fake.id]));
+      setTimeout(() => setNewIds(prev => { const n = new Set(prev); n.delete(fake.id); return n; }), 500);
+      setSyncStatus('synced');
+      setSavedVisible(true);
+      clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = setTimeout(() => setSavedVisible(false), 2000);
+      return;
+    }
+
     const { data, error } = await sb.from('diary_logs').insert({ text, user_id: session.user.id }).select().single();
     if (!error && data) {
       setMemos(prev => {
-        // avoid duplicate from realtime
         if (prev.find(m => m.id === data.id)) return prev;
         return [data, ...prev];
       });
@@ -893,20 +1571,48 @@ function App() {
 
   return (
     <>
-      <header className="header">
+      <header className="header" ref={headerRef} style={{ position: 'sticky', top: 0, zIndex: 100 }}>
         <div className="header-inner">
           <div className="logo">
             <span className="logo-dot" />
             <span className="logo-text">INFINITY LOG</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}>
             <div className="sync-status" style={{ color: syncColor[syncStatus] }}>
               <span className={`sync-dot ${syncStatus}`} />
               {syncLabel[syncStatus]}
             </div>
+
+            {/* Settings */}
+            <button className="settings-btn" onClick={() => setShowSettings(true)} title="AI設定">
+              ⚙
+            </button>
+
+            {/* Active persona button */}
+            <button
+              className="persona-active-btn"
+              onClick={() => setShowPersonaPanel(v => !v)}
+              title="キャラ切り替え"
+            >
+              {customIcons[activePersona]
+                ? <img src={customIcons[activePersona]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                : <HeartSVG id={activePersona} size={32} />
+              }
+            </button>
+
             <button className="theme-btn" onClick={toggleTheme} title="テーマ切り替え">
               {theme === 'dark' ? '☀️' : '🌙'}
             </button>
+
+            {/* Persona panel */}
+            {showPersonaPanel && (
+              <PersonaPanel
+                active={activePersona}
+                onSelect={selectPersona}
+                customIcons={customIcons}
+                onIconChange={handleIconChange}
+              />
+            )}
           </div>
         </div>
 
@@ -948,11 +1654,29 @@ function App() {
           <div key={group.key}>
             <DateDivider dateStr={group.dateStr} isToday={group.key === todayKey} />
             {group.memos.map(memo => (
-              <MemoCard key={memo.id} memo={memo} isNew={newIds.has(memo.id)} onUpdate={updateMemo} />
+              <MemoCard
+                key={memo.id}
+                memo={memo}
+                isNew={newIds.has(memo.id)}
+                onUpdate={updateMemo}
+                activePersona={activePersona}
+                apiKey={apiKey}
+                customIcons={customIcons}
+                onIconChange={handleIconChange}
+                onNeedApiKey={() => setShowSettings(true)}
+              />
             ))}
           </div>
         ))}
       </div>
+
+      {showSettings && (
+        <SettingsModal
+          apiKey={apiKey}
+          onSave={saveApiKey}
+          onClose={() => setShowSettings(false)}
+        />
+      )}
     </>
   );
 }
