@@ -1229,25 +1229,17 @@ function MemoCard({ memo, isNew, onUpdate, activePersona, apiKey, customIcons, o
 
   const getReply = async (e) => {
     e.stopPropagation();
-    if (!apiKey) { onNeedApiKey(); return; }
     if (aiReply) { setAiReply(null); return; }
     setReplyLoading(true);
     const char = CHARACTERS[activePersona];
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch(`${SB_URL}/functions/v1/ai-reply`, {
         method: 'POST',
         headers: {
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
           'content-type': 'application/json',
-          'anthropic-dangerous-allow-browser': 'true',
+          'authorization': `Bearer ${SB_KEY}`,
         },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 150,
-          system: char.system,
-          messages: [{ role: 'user', content: memo.text }],
-        }),
+        body: JSON.stringify({ text: memo.text, system: char.system }),
       });
       const data = await res.json();
       setAiReply(data.content?.[0]?.text || 'うまく答えられなかった…ごめんね');
