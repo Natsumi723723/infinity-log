@@ -795,6 +795,7 @@ function App() {
     setLoading(true);
     sb.from('diary_logs')
       .select('*')
+      .eq('user_id', session.user.id)
       .order('created_at', { ascending: false })
       .then(({ data, error }) => {
         if (!error && data) setMemos(data);
@@ -803,11 +804,12 @@ function App() {
       });
 
     /* Realtime */
+    const filter = `user_id=eq.${session.user.id}`;
     const channel = sb.channel('diary_realtime')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'diary_logs' }, payload => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'diary_logs', filter }, payload => {
         setMemos(prev => prev.find(m => m.id === payload.new.id) ? prev : [payload.new, ...prev]);
       })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'diary_logs' }, payload => {
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'diary_logs', filter }, payload => {
         setMemos(prev => prev.map(m => m.id === payload.new.id ? payload.new : m));
       })
       .subscribe();
@@ -828,7 +830,7 @@ function App() {
     setDraft('');
     setSyncStatus('syncing');
 
-    const { data, error } = await sb.from('diary_logs').insert({ text }).select().single();
+    const { data, error } = await sb.from('diary_logs').insert({ text, user_id: session.user.id }).select().single();
     if (!error && data) {
       setMemos(prev => {
         // avoid duplicate from realtime
