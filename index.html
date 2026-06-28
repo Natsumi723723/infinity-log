@@ -34,18 +34,18 @@
 
   /* ===== LIGHT THEME ===== */
   [data-theme="light"] {
-    --bg: #FFF0F8;
+    --bg: #FEF6FA;
     --surface: #FFFFFF;
-    --border: rgba(233,30,140,0.25);
+    --border: rgba(233,30,140,0.2);
     --text: #1A0010;
     --text-sub: rgba(26,0,16,0.5);
-    --text-muted: rgba(26,0,16,0.3);
-    --memo-bg: linear-gradient(135deg, #FFFFFF 0%, #FFF5FA 100%);
-    --memo-border: rgba(233,30,140,0.12);
-    --header-bg: linear-gradient(180deg, rgba(255,240,248,0.98) 0%, rgba(255,240,248,0.95) 100%);
-    --grid-color: rgba(233,30,140,0.06);
-    --glow-orb: rgba(233,30,140,0.07);
-    --cyan: #0099BB;
+    --text-muted: rgba(26,0,16,0.28);
+    --memo-bg: linear-gradient(135deg, #FFFFFF 0%, #FFF8FC 100%);
+    --memo-border: rgba(233,30,140,0.1);
+    --header-bg: linear-gradient(180deg, rgba(254,246,250,0.98) 0%, rgba(254,246,250,0.95) 100%);
+    --grid-color: transparent;
+    --glow-orb: rgba(233,30,140,0.05);
+    --cyan: #007A9A;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -87,55 +87,28 @@
 
   #root { position: relative; z-index: 1; }
 
-  /* ===== THEME TOGGLE ===== */
-  .theme-toggle {
-    width: 36px;
-    height: 20px;
-    background: var(--surface);
+  /* ===== THEME TOGGLE BUTTON ===== */
+  .theme-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
     border: 1px solid var(--border);
-    border-radius: 10px;
-    position: relative;
+    background: var(--surface);
     cursor: pointer;
-    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    line-height: 1;
+    transition: all 0.2s ease;
     flex-shrink: 0;
   }
 
-  [data-theme="light"] .theme-toggle {
-    background: rgba(233,30,140,0.1);
-    border-color: rgba(233,30,140,0.4);
+  .theme-btn:hover {
+    border-color: var(--pink);
+    box-shadow: 0 0 10px rgba(233,30,140,0.35);
+    transform: rotate(20deg) scale(1.1);
   }
-
-  .theme-toggle-knob {
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: var(--pink);
-    box-shadow: 0 0 6px var(--magenta);
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  [data-theme="light"] .theme-toggle-knob {
-    transform: translateX(16px);
-    box-shadow: 0 0 6px rgba(233,30,140,0.5);
-  }
-
-  .theme-toggle-icon {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 8px;
-    line-height: 1;
-    pointer-events: none;
-    transition: opacity 0.2s;
-  }
-
-  .theme-toggle-icon.moon { left: 4px; opacity: 1; }
-  .theme-toggle-icon.sun  { right: 3px; opacity: 0.5; }
-  [data-theme="light"] .theme-toggle-icon.moon { opacity: 0.5; }
-  [data-theme="light"] .theme-toggle-icon.sun  { opacity: 1; }
 
   .header {
     position: sticky;
@@ -914,11 +887,9 @@ function App() {
               <span className={`sync-dot ${syncStatus}`} />
               {syncLabel[syncStatus]}
             </div>
-            <div className="theme-toggle" onClick={toggleTheme} title="テーマ切り替え">
-              <span className="theme-toggle-icon moon">🌙</span>
-              <span className="theme-toggle-icon sun">☀️</span>
-              <span className="theme-toggle-knob" />
-            </div>
+            <button className="theme-btn" onClick={toggleTheme} title="テーマ切り替え">
+              {theme === 'dark' ? '☀️' : '🌙'}
+            </button>
           </div>
         </div>
 
