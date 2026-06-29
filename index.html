@@ -993,6 +993,8 @@ const QUICK_TAGS = [
   { emoji: '🔥', label: 'やる気' },
   { emoji: '🩷', label: 'ポジティブ' },
   { emoji: '🖤', label: 'ネガティブ' },
+  { emoji: '🔍', label: '調べたこと' },
+  { emoji: 'ℹ️', label: 'インプット' },
 ];
 
 /* ── Character definitions ── */
@@ -1476,6 +1478,7 @@ function App() {
   const [syncStatus, setSyncStatus] = useState('offline');
   const [newIds, setNewIds] = useState(new Set());
   const [theme, setTheme] = useState(() => localStorage.getItem('il-theme') || 'dark');
+  const [pendingTag, setPendingTag] = useState(null);
 
   /* Persona & AI state */
   const [activePersona, setActivePersona] = useState(() => localStorage.getItem('il-persona') || 'heartrun');
@@ -1584,13 +1587,15 @@ function App() {
   }, [draft]);
 
   const commitMemo = useCallback(async () => {
-    if (!draft.trim()) return;
     const text = draft.trim();
+    if (!text && !pendingTag) return;
     setDraft('');
+    const tag = pendingTag;
+    setPendingTag(null);
     setSyncStatus('syncing');
 
     if (DEMO_MODE) {
-      const fake = { id: String(Date.now()), text, created_at: new Date().toISOString(), user_id: 'demo' };
+      const fake = { id: String(Date.now()), text: text || null, tag: tag || null, created_at: new Date().toISOString(), user_id: 'demo' };
       setMemos(prev => [fake, ...prev]);
       setNewIds(prev => new Set([...prev, fake.id]));
       setTimeout(() => setNewIds(prev => { const n = new Set(prev); n.delete(fake.id); return n; }), 500);
@@ -1601,7 +1606,7 @@ function App() {
       return;
     }
 
-    const { data, error } = await sb.from('diary_logs').insert({ text, user_id: session.user.id }).select().single();
+    const { data, error } = await sb.from('diary_logs').insert({ text: text || null, tag: tag || null, user_id: session.user.id }).select().single();
     if (!error && data) {
       setMemos(prev => {
         if (prev.find(m => m.id === data.id)) return prev;
@@ -1712,6 +1717,14 @@ function App() {
           <div className={`input-container ${focused ? 'focused' : ''}`}>
             <div className="input-meta">
               <span className="input-meta-date">{nowFormatted()}</span>
+              {pendingTag && (
+                <span
+                  className="tag-badge"
+                  style={{marginBottom:0, cursor:'pointer'}}
+                  onClick={() => setPendingTag(null)}
+                  title="タップで削除"
+                >{pendingTag} ×</span>
+              )}
             </div>
             <textarea
               ref={textareaRef}
@@ -1723,7 +1736,7 @@ function App() {
               onFocus={() => setFocused(true)}
               onBlur={() => {
                 setFocused(false);
-                if (draft.trim()) {
+                if (draft.trim() || pendingTag) {
                   clearTimeout(debounceRef.current);
                   commitMemo();
                 }
@@ -1738,25 +1751,10 @@ function App() {
           </div>
         </div>
 
-        <QuickLogBar onSelect={async (tag) => {
-          if (DEMO_MODE) {
-            const fake = { id: String(Date.now()), text: null, tag, created_at: new Date().toISOString(), user_id: 'demo' };
-            setMemos(prev => [fake, ...prev]);
-            setNewIds(prev => new Set([...prev, fake.id]));
-            setTimeout(() => setNewIds(prev => { const n = new Set(prev); n.delete(fake.id); return n; }), 500);
-            return;
-          }
-          setSyncStatus('syncing');
-          const { data, error } = await sb.from('diary_logs').insert({ text: null, tag, user_id: session.user.id }).select().single();
-          if (!error && data) {
-            setMemos(prev => prev.find(m => m.id === data.id) ? prev : [data, ...prev]);
-            setNewIds(prev => new Set([...prev, data.id]));
-            setTimeout(() => setNewIds(prev => { const n = new Set(prev); n.delete(data.id); return n; }), 500);
-          }
-          setSyncStatus('synced');
-          setSavedVisible(true);
-          clearTimeout(savedTimerRef.current);
-          savedTimerRef.current = setTimeout(() => setSavedVisible(false), 2000);
+        <QuickLogBar onSelect={(tag) => {
+          setPendingTag(tag);
+          clearTimeout(debounceRef.current);
+          textareaRef.current?.focus();
         }} />
       </header>
 
