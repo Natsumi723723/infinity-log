@@ -913,8 +913,21 @@ const DEMO_MEMOS = [
 /* ── Supabase ── */
 const SB_URL = "https://gjcbtolotqywzdggckto.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqY2J0b2xvdHF5d3pkZ2dja3RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0NzU4MzIsImV4cCI6MjA5NjA1MTgzMn0.dnMQl7cB5H7MGz0Nuh8PibQuYa1iYYmauJEhrlfyDBc";
+/* iOS PWA用: SafariとPWAでセッションを共有するためCookieストレージを使う */
+const cookieStorage = {
+  getItem(key) {
+    const m = document.cookie.match('(?:^|; )' + key.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '=([^;]*)');
+    return m ? decodeURIComponent(m[1]) : null;
+  },
+  setItem(key, value) {
+    document.cookie = `${key}=${encodeURIComponent(value)};path=/;max-age=31536000;samesite=lax`;
+  },
+  removeItem(key) {
+    document.cookie = `${key}=;path=/;max-age=0`;
+  },
+};
 const sb = supabase.createClient(SB_URL, SB_KEY, {
-  auth: { persistSession: true, detectSessionInUrl: true, autoRefreshToken: true }
+  auth: { persistSession: true, detectSessionInUrl: true, autoRefreshToken: true, storage: cookieStorage }
 });
 
 /* ── Character definitions ── */
