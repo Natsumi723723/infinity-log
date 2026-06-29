@@ -373,15 +373,12 @@
   .quick-log-wrapper {
     max-width: 680px;
     margin: 0 auto;
-    padding: 0 24px 12px;
+    padding: 0 16px 12px;
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
+    justify-content: center;
   }
-
-  .quick-log-wrapper::-webkit-scrollbar { display: none; }
 
   .quick-btn {
     width: 40px;
