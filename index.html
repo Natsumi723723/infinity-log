@@ -462,19 +462,88 @@
   }
 
   /* ====== MEMO CARD ====== */
+  .memo-card-wrap {
+    position: relative;
+    margin-bottom: 6px;
+    overflow: hidden;
+    border-radius: 2px;
+  }
+  .memo-card-delete-bg {
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 80px;
+    background: #c0152a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+  }
   .memo-card {
     background: var(--memo-bg);
     border: 1px solid var(--memo-border);
     border-radius: 2px;
     padding: 12px 16px 10px;
-    margin-bottom: 6px;
-    transition: var(--theme-transition), border-color 0.2s, box-shadow 0.2s;
+    transition: var(--theme-transition), border-color 0.2s, box-shadow 0.2s, transform 0.15s ease;
     cursor: text;
+    position: relative;
+    z-index: 1;
+    will-change: transform;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .memo-card:hover {
     border-color: rgba(233,30,140,0.25);
     box-shadow: 0 0 12px rgba(233,30,140,0.06);
+  }
+
+  /* 削除確認ポップアップ */
+  .delete-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .delete-confirm-box {
+    background: var(--memo-bg);
+    border: 1px solid var(--memo-border);
+    border-radius: 4px;
+    padding: 24px 28px;
+    width: 280px;
+    text-align: center;
+  }
+  .delete-confirm-box p {
+    margin: 0 0 20px;
+    font-size: 14px;
+    color: var(--text-main);
+    line-height: 1.6;
+  }
+  .delete-confirm-actions {
+    display: flex;
+    gap: 10px;
+  }
+  .delete-confirm-actions button {
+    flex: 1;
+    padding: 10px;
+    border-radius: 2px;
+    border: 1px solid var(--memo-border);
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-main);
+    transition: all 0.15s;
+  }
+  .delete-confirm-actions .btn-delete {
+    background: #c0152a;
+    border-color: #c0152a;
+    color: #fff;
   }
 
   .memo-card.editing {
@@ -1290,13 +1359,71 @@ function SettingsModal({ apiKey, onSave, onClose }) {
   );
 }
 
+/* ── DeleteConfirm ── */
+function DeleteConfirm({ onCancel, onConfirm }) {
+  return (
+    <div className="delete-confirm-overlay" onClick={onCancel}>
+      <div className="delete-confirm-box" onClick={e => e.stopPropagation()}>
+        <p>この記録を削除しますか？<br/>元に戻せません。</p>
+        <div className="delete-confirm-actions">
+          <button onClick={onCancel}>キャンセル</button>
+          <button className="btn-delete" onClick={onConfirm}>削除</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── MemoCard ── */
-function MemoCard({ memo, isNew, onUpdate, activePersona, apiKey, customIcons, onIconChange, onNeedApiKey }) {
+function MemoCard({ memo, isNew, onUpdate, onDelete, activePersona, apiKey, customIcons, onIconChange, onNeedApiKey }) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(memo.text);
   const [aiReply, setAiReply] = useState(null);
   const [replyLoading, setReplyLoading] = useState(false);
+  const [swipeX, setSwipeX] = useState(0);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const taRef = useRef(null);
+  const touchStartX = useRef(null);
+  const touchStartY = useRef(null);
+  const isHorizSwipe = useRef(false);
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    isHorizSwipe.current = false;
+  };
+
+  const handleTouchMove = (e) => {
+    if (editing) return;
+    const dx = e.touches[0].clientX - touchStartX.current;
+    const dy = e.touches[0].clientY - touchStartY.current;
+    if (!isHorizSwipe.current && Math.abs(dy) > Math.abs(dx)) return;
+    if (dx < 0) {
+      isHorizSwipe.current = true;
+      e.preventDefault();
+      setSwipeX(Math.max(dx, -90));
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (swipeX < -60) {
+      setSwipeX(-80);
+      setShowDeleteConfirm(true);
+    } else {
+      setSwipeX(0);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    setShowDeleteConfirm(false);
+    setSwipeX(0);
+    await onDelete(memo.id);
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(false);
+    setSwipeX(0);
+  };
 
   useEffect(() => {
     if (editing && taRef.current) {
@@ -1353,10 +1480,16 @@ function MemoCard({ memo, isNew, onUpdate, activePersona, apiKey, customIcons, o
   };
 
   return (
+    <div className="memo-card-wrap">
+      {swipeX < 0 && <div className="memo-card-delete-bg" style={{opacity: Math.min(1, Math.abs(swipeX)/60)}}>DELETE</div>}
+      {showDeleteConfirm && <DeleteConfirm onCancel={handleDeleteCancel} onConfirm={handleDeleteConfirm} />}
     <div
       className={`memo-card ${isNew ? 'new-entry' : ''} ${editing ? 'editing' : ''}`}
       onClick={() => { if (!editing) setEditing(true); }}
-      style={{ cursor: editing ? 'default' : 'text' }}
+      style={{ cursor: editing ? 'default' : 'text', transform: `translateX(${swipeX}px)`, transition: swipeX === 0 ? 'transform 0.2s ease' : 'none' }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       <div className="memo-time">{formatTime(memo.created_at)}</div>
       {memo.tag && <div className="tag-badge">{memo.tag}</div>}
@@ -1406,6 +1539,7 @@ function MemoCard({ memo, isNew, onUpdate, activePersona, apiKey, customIcons, o
           )}
         </>
       )}
+    </div>
     </div>
   );
 }
@@ -1650,6 +1784,17 @@ function App() {
     setSyncStatus('synced');
   }, []);
 
+  const deleteMemo = useCallback(async (id) => {
+    if (DEMO_MODE) {
+      setMemos(prev => prev.filter(m => m.id !== id));
+      return;
+    }
+    setSyncStatus('syncing');
+    await sb.from('diary_logs').delete().eq('id', id);
+    setMemos(prev => prev.filter(m => m.id !== id));
+    setSyncStatus('synced');
+  }, []);
+
   const handleChange = (e) => {
     setDraft(e.target.value);
     clearTimeout(debounceRef.current);
@@ -1784,6 +1929,7 @@ function App() {
                 memo={memo}
                 isNew={newIds.has(memo.id)}
                 onUpdate={updateMemo}
+                onDelete={deleteMemo}
                 activePersona={activePersona}
                 apiKey={apiKey}
                 customIcons={customIcons}
