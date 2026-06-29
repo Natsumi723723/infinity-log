@@ -995,6 +995,8 @@ const QUICK_TAGS = [
   { emoji: '🖤', label: 'ネガティブ' },
   { emoji: '🔍', label: '調べたこと' },
   { emoji: 'ℹ️', label: 'インプット' },
+  { emoji: '💡', label: 'アイデア' },
+  { emoji: '✨', label: '気づき' },
 ];
 
 /* ── Character definitions ── */
@@ -1479,6 +1481,7 @@ function App() {
   const [newIds, setNewIds] = useState(new Set());
   const [theme, setTheme] = useState(() => localStorage.getItem('il-theme') || 'dark');
   const [pendingTag, setPendingTag] = useState(null);
+  const pendingTagRef = useRef(null);
 
   /* Persona & AI state */
   const [activePersona, setActivePersona] = useState(() => localStorage.getItem('il-persona') || 'heartrun');
@@ -1588,9 +1591,10 @@ function App() {
 
   const commitMemo = useCallback(async () => {
     const text = draft.trim();
-    if (!text && !pendingTag) return;
+    const tag = pendingTagRef.current;
+    if (!text && !tag) return;
     setDraft('');
-    const tag = pendingTag;
+    pendingTagRef.current = null;
     setPendingTag(null);
     setSyncStatus('syncing');
 
@@ -1721,7 +1725,7 @@ function App() {
                 <span
                   className="tag-badge"
                   style={{marginBottom:0, cursor:'pointer'}}
-                  onClick={() => setPendingTag(null)}
+                  onClick={() => { pendingTagRef.current = null; setPendingTag(null); }}
                   title="タップで削除"
                 >{pendingTag} ×</span>
               )}
@@ -1752,9 +1756,12 @@ function App() {
         </div>
 
         <QuickLogBar onSelect={(tag) => {
+          pendingTagRef.current = tag;
           setPendingTag(tag);
           clearTimeout(debounceRef.current);
           textareaRef.current?.focus();
+          // コメントなしで1.5秒放置したら自動保存
+          debounceRef.current = setTimeout(() => commitMemo(), 1500);
         }} />
       </header>
 
