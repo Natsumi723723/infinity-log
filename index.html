@@ -1752,7 +1752,12 @@ function DailySummary({ dateStr, memos, activePersona, onClose, onPrev, onNext, 
       if (m.tag) tagCounts[m.tag] = (tagCounts[m.tag] || 0) + 1;
     });
     const tagSummary = Object.entries(tagCounts).map(([t, c]) => `${t} ×${c}`).join('、');
-    const logs = memos.map(m => [m.tag, m.text].filter(Boolean).join(' ')).join('\n');
+    const logs = memos.map((m, i) => {
+      const parts = [];
+      if (m.tag) parts.push(`[${m.tag}]`);
+      if (m.text) parts.push(m.text);
+      return `${i+1}. ${parts.join(' ') || '（記録のみ）'}`;
+    }).join('\n');
 
     if (DEMO_MODE) {
       setResult({ tagCounts, lines: ['今日もたくさん記録してくれたね！', 'アイデアや気づきがあふれてた1日。', '自分と向き合う時間、すてきだよ。'], message: 'えーやば今日もしっかり生きてる〜！すごいじゃん！バタン💤', char: CHARACTERS[activePersona] });
@@ -1762,11 +1767,11 @@ function DailySummary({ dateStr, memos, activePersona, onClose, onPrev, onNext, 
 
     const char = CHARACTERS[activePersona];
     const system = `あなたは「${char.name}」というキャラクターです。${char.system}
-今日のログをもとに、以下のJSON形式のみで返してください（説明文・マークダウン不要）:
-{"lines":["具体的な出来事や言葉を使った振り返り1","振り返り2","振り返り3"],"message":"キャラとしての一言（1〜2文）"}
-【重要】linesは必ずログに書かれた具体的な内容・言葉を引用・言及して書くこと。抽象的な表現NG。ですます調。メッセージはキャラの口調で。`;
+以下の今日のログ全件（タグあり・タグなし問わずすべて）をもとに、JSON形式のみで返してください（他のテキスト不要）:
+{"lines":["振り返り1","振り返り2","振り返り3"],"message":"キャラとしての一言（1〜2文）"}
+【重要】・linesはログに書かれた具体的な言葉・出来事を必ず使うこと。タグなしの投稿内容も必ず含めること。抽象的な表現NG。ですます調。・messageはキャラの口調で。`;
 
-    const userText = `タグ: ${tagSummary || 'なし'}\n\n今日のログ:\n${logs || '（記録なし）'}`;
+    const userText = `タグ集計: ${tagSummary || 'なし'}\n\n今日のログ全件:\n${logs || '（記録なし）'}`;
 
     try {
       const res = await fetch(`${SB_URL}/functions/v1/ai-reply`, {
