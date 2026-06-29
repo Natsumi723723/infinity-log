@@ -568,6 +568,31 @@
     transition: color 0.35s ease;
   }
 
+  .tag-edit-row {
+    margin-bottom: 6px;
+    min-height: 22px;
+  }
+  .tag-add-btn {
+    background: transparent;
+    border: 1px dashed var(--memo-border);
+    border-radius: 20px;
+    color: var(--text-muted);
+    font-size: 11px;
+    padding: 2px 10px;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+  }
+  .tag-edit-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .quick-btn.tag-selected {
+    border-color: var(--pink);
+    background: rgba(233,30,140,0.15);
+    box-shadow: 0 0 8px rgba(233,30,140,0.25);
+  }
   .memo-edit-input {
     width: 100%;
     background: transparent;
@@ -1378,6 +1403,8 @@ function DeleteConfirm({ onCancel, onConfirm }) {
 function MemoCard({ memo, isNew, onUpdate, onDelete, activePersona, apiKey, customIcons, onIconChange, onNeedApiKey }) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(memo.text);
+  const [editTag, setEditTag] = useState(memo.tag);
+  const [showTagPicker, setShowTagPicker] = useState(false);
   const [aiReply, setAiReply] = useState(null);
   const [replyLoading, setReplyLoading] = useState(false);
   const [swipeX, setSwipeX] = useState(0);
@@ -1436,12 +1463,14 @@ function MemoCard({ memo, isNew, onUpdate, onDelete, activePersona, apiKey, cust
   }, [editing]);
 
   const handleSave = async () => {
-    await onUpdate(memo.id, editText.trim());
+    await onUpdate(memo.id, editText.trim(), editTag);
     setEditing(false);
   };
 
   const handleCancel = () => {
     setEditText(memo.text);
+    setEditTag(memo.tag);
+    setShowTagPicker(false);
     setEditing(false);
   };
 
@@ -1492,9 +1521,44 @@ function MemoCard({ memo, isNew, onUpdate, onDelete, activePersona, apiKey, cust
       onTouchEnd={handleTouchEnd}
     >
       <div className="memo-time">{formatTime(memo.created_at)}</div>
-      {memo.tag && <div className="tag-badge">{memo.tag}</div>}
+      {!editing && memo.tag && <div className="tag-badge">{memo.tag}</div>}
       {editing ? (
         <>
+          <div className="tag-edit-row" onClick={e => e.stopPropagation()}>
+            {editTag ? (
+              <span className="tag-badge" style={{cursor:'pointer'}} onClick={() => setShowTagPicker(v => !v)}>
+                {editTag} ✎
+              </span>
+            ) : (
+              <button
+                className="tag-add-btn"
+                onClick={() => setShowTagPicker(v => !v)}
+              >＋ タグ</button>
+            )}
+          </div>
+          {showTagPicker && (
+            <div className="tag-edit-picker" onClick={e => e.stopPropagation()}>
+              {editTag && (
+                <button
+                  className="quick-btn"
+                  style={{width:'34px',height:'34px',fontSize:'13px',color:'var(--text-muted)'}}
+                  onClick={() => { setEditTag(null); setShowTagPicker(false); }}
+                  title="タグ削除"
+                >×</button>
+              )}
+              {QUICK_TAGS.map(({emoji, label}) => {
+                const val = emoji + ' ' + label;
+                return (
+                  <button
+                    key={label}
+                    className={`quick-btn${editTag === val ? ' tag-selected' : ''}`}
+                    style={{width:'34px',height:'34px',fontSize:'17px'}}
+                    onClick={() => { setEditTag(val); setShowTagPicker(false); }}
+                  >{emoji}</button>
+                );
+              })}
+            </div>
+          )}
           <textarea
             ref={taRef}
             className="memo-edit-input"
@@ -1715,6 +1779,9 @@ function App() {
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'diary_logs', filter }, payload => {
         setMemos(prev => prev.map(m => m.id === payload.new.id ? payload.new : m));
       })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'diary_logs', filter }, payload => {
+        setMemos(prev => prev.filter(m => m.id !== payload.old.id));
+      })
       .subscribe();
     return () => sb.removeChannel(channel);
   }, [session]);
@@ -1775,9 +1842,13 @@ function App() {
     }
   };
 
-  const updateMemo = useCallback(async (id, text) => {
+  const updateMemo = useCallback(async (id, text, tag) => {
+    if (DEMO_MODE) {
+      setMemos(prev => prev.map(m => m.id === id ? { ...m, text: text || null, tag: tag || null } : m));
+      return;
+    }
     setSyncStatus('syncing');
-    const { data, error } = await sb.from('diary_logs').update({ text }).eq('id', id).select().single();
+    const { data, error } = await sb.from('diary_logs').update({ text: text || null, tag: tag || null }).eq('id', id).select().single();
     if (!error && data) {
       setMemos(prev => prev.map(m => m.id === id ? data : m));
     }
