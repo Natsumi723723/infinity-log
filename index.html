@@ -984,16 +984,22 @@ const sb = supabase.createClient(SB_URL, SB_KEY, {
 /* ── Quick log tags ── */
 const QUICK_TAGS = [
   { emoji: '☀️', label: 'おはよう' },
-  { emoji: '🌙', label: '寝る' },
-  { emoji: '🌟', label: '初めて' },
-  { emoji: '💘', label: 'ラブ' },
-  { emoji: '🔥', label: 'やる気' },
+  { emoji: '💤', label: '睡眠' },
   { emoji: '🩷', label: 'ポジティブ' },
   { emoji: '🖤', label: 'ネガティブ' },
-  { emoji: '🔍', label: '調べたこと' },
-  { emoji: 'ℹ️', label: 'インプット' },
   { emoji: '💡', label: 'アイデア' },
+  { emoji: '🌟', label: '初めて' },
+  { emoji: '💘', label: 'ラブ' },
+  { emoji: '🔍', label: '調べたこと' },
   { emoji: '✨', label: '気づき' },
+  { emoji: '🛍️', label: 'GET' },
+  { emoji: '🤝', label: '人との関わり' },
+  { emoji: '📖', label: 'インプット' },
+  { emoji: '✍️', label: 'アウトプット' },
+  { emoji: '🌳', label: '行ってきます' },
+  { emoji: '🎪', label: 'ただいま' },
+  { emoji: '✅', label: 'TODO', todo: true },
+  { emoji: '🌡️', label: '体調' },
 ];
 
 /* ── Character definitions ── */
@@ -1159,11 +1165,11 @@ function nowFormatted() {
 function QuickLogBar({ onSelect }) {
   return (
     <div className="quick-log-wrapper">
-      {QUICK_TAGS.map(({ emoji, label }) => (
+      {QUICK_TAGS.map(({ emoji, label, todo }) => (
         <button
           key={label}
           className="quick-btn"
-          onClick={() => onSelect(emoji + ' ' + label)}
+          onClick={() => onSelect(emoji + ' ' + label, { todo })}
           title={label}
         >
           {emoji}
@@ -1479,6 +1485,7 @@ function App() {
   const [theme, setTheme] = useState(() => localStorage.getItem('il-theme') || 'dark');
   const [pendingTag, setPendingTag] = useState(null);
   const pendingTagRef = useRef(null);
+  const pendingTodoRef = useRef(false);
 
   /* Persona & AI state */
   const [activePersona, setActivePersona] = useState(() => localStorage.getItem('il-persona') || 'heartrun');
@@ -1589,9 +1596,11 @@ function App() {
   const commitMemo = useCallback(async () => {
     const text = draft.trim();
     const tag = pendingTagRef.current;
+    const isTodo = pendingTodoRef.current;
     if (!text && !tag) return;
     setDraft('');
     pendingTagRef.current = null;
+    pendingTodoRef.current = false;
     setPendingTag(null);
     setSyncStatus('syncing');
 
@@ -1604,6 +1613,10 @@ function App() {
       setSavedVisible(true);
       clearTimeout(savedTimerRef.current);
       savedTimerRef.current = setTimeout(() => setSavedVisible(false), 2000);
+      if (isTodo) {
+        const title = encodeURIComponent(text || 'TODO');
+        window.location.href = `x-apple-reminderkit://REMCDReminder/?title=${title}`;
+      }
       return;
     }
 
@@ -1622,6 +1635,10 @@ function App() {
     setSavedVisible(true);
     clearTimeout(savedTimerRef.current);
     savedTimerRef.current = setTimeout(() => setSavedVisible(false), 2000);
+    if (isTodo) {
+      const title = encodeURIComponent(text || 'TODO');
+      window.location.href = `x-apple-reminderkit://REMCDReminder/?title=${title}`;
+    }
   }, [draft]);
 
   const handleKeyDown = (e) => {
@@ -1752,8 +1769,9 @@ function App() {
           </div>
         </div>
 
-        <QuickLogBar onSelect={(tag) => {
+        <QuickLogBar onSelect={(tag, opts) => {
           pendingTagRef.current = tag;
+          pendingTodoRef.current = !!(opts && opts.todo);
           setPendingTag(tag);
           clearTimeout(debounceRef.current);
           textareaRef.current?.focus();
