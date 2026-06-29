@@ -1730,7 +1730,7 @@ function MemoCard({ memo, isNew, onUpdate, onDelete, activePersona, apiKey, cust
 
 /* ── DailySummary ── */
 function DailySummary({ dateStr, memos, activePersona, onClose, onPrev, onNext, isToday }) {
-  const cacheKey = `il-summary-${dateStr}-${activePersona}`;
+  const cacheKey = `il-summary-v2-${dateStr}-${activePersona}`;
   const cached = !isToday && localStorage.getItem(cacheKey);
   const [result, setResult] = useState(cached ? JSON.parse(cached) : null);
   const [loading, setLoading] = useState(!cached);
