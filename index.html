@@ -369,6 +369,44 @@
 
   .saved-indicator.visible { opacity: 1; }
 
+  /* ====== QUICK LOG ====== */
+  .quick-log-wrapper {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 24px 12px;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .quick-log-wrapper::-webkit-scrollbar { display: none; }
+
+  .quick-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--memo-border);
+    background: var(--memo-bg);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .quick-btn:hover, .quick-btn:active {
+    border-color: var(--pink);
+    background: rgba(233,30,140,0.1);
+    box-shadow: 0 0 10px rgba(233,30,140,0.2);
+    transform: scale(1.12);
+  }
+
   /* ====== TIMELINE ====== */
   .timeline {
     max-width: 680px;
@@ -408,6 +446,22 @@
     padding: 2px 6px;
     border-radius: 1px;
     flex-shrink: 0;
+  }
+
+  /* ====== TAG BADGE ====== */
+  .tag-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 9px;
+    border-radius: 12px;
+    background: rgba(233,30,140,0.12);
+    border: 1px solid rgba(233,30,140,0.25);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--pink);
+    margin-bottom: 6px;
+    letter-spacing: 0.03em;
   }
 
   /* ====== MEMO CARD ====== */
@@ -930,6 +984,17 @@ const sb = supabase.createClient(SB_URL, SB_KEY, {
   auth: { persistSession: true, detectSessionInUrl: true, autoRefreshToken: true, storage: cookieStorage }
 });
 
+/* ── Quick log tags ── */
+const QUICK_TAGS = [
+  { emoji: '☀️', label: 'おはよう' },
+  { emoji: '🌙', label: '寝る' },
+  { emoji: '🌟', label: '初めて' },
+  { emoji: '💘', label: 'ラブ' },
+  { emoji: '🔥', label: 'やる気' },
+  { emoji: '🩷', label: 'ポジティブ' },
+  { emoji: '🖤', label: 'ネガティブ' },
+];
+
 /* ── Character definitions ── */
 const CHARACTERS = {
   heartrun: {
@@ -1089,6 +1154,24 @@ function nowFormatted() {
   return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} ${DAYS[d.getDay()]}`;
 }
 
+/* ── Quick Log Bar ── */
+function QuickLogBar({ onSelect }) {
+  return (
+    <div className="quick-log-wrapper">
+      {QUICK_TAGS.map(({ emoji, label }) => (
+        <button
+          key={label}
+          className="quick-btn"
+          onClick={() => onSelect(emoji + ' ' + label)}
+          title={label}
+        >
+          {emoji}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /* ── AI Bubble ── */
 function AIBubble({ persona, text, loading, customIcon, onIconChange }) {
   const char = CHARACTERS[persona];
@@ -1219,7 +1302,6 @@ function MemoCard({ memo, isNew, onUpdate, activePersona, apiKey, customIcons, o
   }, [editing]);
 
   const handleSave = async () => {
-    if (!editText.trim()) return;
     await onUpdate(memo.id, editText.trim());
     setEditing(false);
   };
@@ -1270,6 +1352,7 @@ function MemoCard({ memo, isNew, onUpdate, activePersona, apiKey, customIcons, o
       style={{ cursor: editing ? 'default' : 'text' }}
     >
       <div className="memo-time">{formatTime(memo.created_at)}</div>
+      {memo.tag && <div className="tag-badge">{memo.tag}</div>}
       {editing ? (
         <>
           <textarea
@@ -1279,6 +1362,7 @@ function MemoCard({ memo, isNew, onUpdate, activePersona, apiKey, customIcons, o
             onChange={handleInput}
             onKeyDown={handleKeyDown}
             onClick={e => e.stopPropagation()}
+            placeholder="コメントを追加…"
           />
           <div className="memo-edit-footer" onClick={e => e.stopPropagation()}>
             <span className="edit-hint">⌘ + ENTER to save  •  ESC to cancel</span>
@@ -1288,7 +1372,10 @@ function MemoCard({ memo, isNew, onUpdate, activePersona, apiKey, customIcons, o
         </>
       ) : (
         <>
-          <div className="memo-text">{memo.text}</div>
+          {memo.text
+            ? <div className="memo-text">{memo.text}</div>
+            : memo.tag && <div style={{fontSize:'12px',color:'var(--text-muted)',marginBottom:'4px'}}>タップしてコメントを追加…</div>
+          }
           <div className="memo-card-footer" onClick={e => e.stopPropagation()}>
             <button
               className="reply-btn"
@@ -1650,6 +1737,27 @@ function App() {
             </div>
           </div>
         </div>
+
+        <QuickLogBar onSelect={async (tag) => {
+          if (DEMO_MODE) {
+            const fake = { id: String(Date.now()), text: null, tag, created_at: new Date().toISOString(), user_id: 'demo' };
+            setMemos(prev => [fake, ...prev]);
+            setNewIds(prev => new Set([...prev, fake.id]));
+            setTimeout(() => setNewIds(prev => { const n = new Set(prev); n.delete(fake.id); return n; }), 500);
+            return;
+          }
+          setSyncStatus('syncing');
+          const { data, error } = await sb.from('diary_logs').insert({ text: null, tag, user_id: session.user.id }).select().single();
+          if (!error && data) {
+            setMemos(prev => prev.find(m => m.id === data.id) ? prev : [data, ...prev]);
+            setNewIds(prev => new Set([...prev, data.id]));
+            setTimeout(() => setNewIds(prev => { const n = new Set(prev); n.delete(data.id); return n; }), 500);
+          }
+          setSyncStatus('synced');
+          setSavedVisible(true);
+          clearTimeout(savedTimerRef.current);
+          savedTimerRef.current = setTimeout(() => setSavedVisible(false), 2000);
+        }} />
       </header>
 
       <div className="timeline">
