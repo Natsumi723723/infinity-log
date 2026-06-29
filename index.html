@@ -2071,10 +2071,15 @@ function App() {
       return;
     }
     setSyncStatus('syncing');
-    await sb.from('diary_logs').delete().eq('id', id);
+    const { error } = await sb.from('diary_logs').delete().eq('id', id).eq('user_id', session.user.id);
+    if (error) {
+      console.error('delete error:', error);
+      setSyncStatus('synced');
+      return;
+    }
     setMemos(prev => prev.filter(m => m.id !== id));
     setSyncStatus('synced');
-  }, []);
+  }, [session]);
 
   const handleChange = (e) => {
     setDraft(e.target.value);
