@@ -1729,12 +1729,18 @@ function MemoCard({ memo, isNew, onUpdate, onDelete, activePersona, apiKey, cust
 }
 
 /* ── DailySummary ── */
-function DailySummary({ dateStr, memos, activePersona, onClose, onPrev, onNext }) {
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(true);
+function DailySummary({ dateStr, memos, activePersona, onClose, onPrev, onNext, isToday }) {
+  const cacheKey = `il-summary-${dateStr}-${activePersona}`;
+  const cached = !isToday && localStorage.getItem(cacheKey);
+  const [result, setResult] = useState(cached ? JSON.parse(cached) : null);
+  const [loading, setLoading] = useState(!cached);
 
   useEffect(() => {
-    generate();
+    if (!cached) generate();
+    else {
+      setResult(JSON.parse(localStorage.getItem(cacheKey)));
+      setLoading(false);
+    }
   }, [dateStr]);
 
   const generate = async () => {
@@ -1771,7 +1777,9 @@ function DailySummary({ dateStr, memos, activePersona, onClose, onPrev, onNext }
       const data = await res.json();
       const text = data.content?.[0]?.text || '';
       const json = JSON.parse(text.match(/\{[\s\S]*\}/)?.[0] || '{}');
-      setResult({ tagCounts, lines: json.lines || [], message: json.message || '', char });
+      const newResult = { tagCounts, lines: json.lines || [], message: json.message || '', char };
+      setResult(newResult);
+      if (!isToday) localStorage.setItem(cacheKey, JSON.stringify(newResult));
     } catch (e) {
       setResult({ error: true });
     }
@@ -2118,6 +2126,7 @@ function App() {
             dateStr={summaryTarget.dateStr}
             memos={summaryTarget.memos}
             activePersona={activePersona}
+            isToday={sortedGroups[idx]?.key === todayKey}
             onClose={() => setSummaryTarget(null)}
             onPrev={prevGroup ? () => setSummaryTarget({ dateStr: prevGroup.dateStr, memos: prevGroup.memos }) : null}
             onNext={nextGroup ? () => setSummaryTarget({ dateStr: nextGroup.dateStr, memos: nextGroup.memos }) : null}
