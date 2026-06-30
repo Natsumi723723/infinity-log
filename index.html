@@ -2079,6 +2079,32 @@ function App() {
     savedTimerRef.current = setTimeout(() => setSavedVisible(false), 2000);
   }, [draft]);
 
+  const postTagOnly = useCallback(async (tag) => {
+    if (!tag) return;
+    setSyncStatus('syncing');
+    if (DEMO_MODE) {
+      const fake = { id: String(Date.now()), text: null, tag, created_at: new Date().toISOString(), user_id: 'demo' };
+      setMemos(prev => [fake, ...prev]);
+      setNewIds(prev => new Set([...prev, fake.id]));
+      setTimeout(() => setNewIds(prev => { const n = new Set(prev); n.delete(fake.id); return n; }), 500);
+      setSyncStatus('synced');
+      setSavedVisible(true);
+      clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = setTimeout(() => setSavedVisible(false), 2000);
+      return;
+    }
+    const { data, error } = await sb.from('diary_logs').insert({ text: null, tag, user_id: session.user.id }).select().single();
+    if (!error && data) {
+      setMemos(prev => prev.find(m => m.id === data.id) ? prev : [data, ...prev]);
+      setNewIds(prev => new Set([...prev, data.id]));
+      setTimeout(() => setNewIds(prev => { const n = new Set(prev); n.delete(data.id); return n; }), 500);
+    }
+    setSyncStatus('synced');
+    setSavedVisible(true);
+    clearTimeout(savedTimerRef.current);
+    savedTimerRef.current = setTimeout(() => setSavedVisible(false), 2000);
+  }, [session]);
+
   const handleKeyDown = (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       e.preventDefault();
@@ -2245,17 +2271,17 @@ function App() {
         </div>
 
         <QuickLogBar onSelect={(tag, opts) => {
-          pendingTagRef.current = tag;
-          pendingTodoRef.current = !!(opts && opts.todo);
-          setPendingTag(tag);
           clearTimeout(debounceRef.current);
-          if (draft.trim()) {
-            // テキストあり → フォーカスして2秒待つ
+          if (!draft.trim()) {
+            // テキストなし → アイコンのみで即時投稿
+            postTagOnly(tag);
+          } else {
+            // テキストあり → タグ付きで通常投稿
+            pendingTagRef.current = tag;
+            pendingTodoRef.current = !!(opts && opts.todo);
+            setPendingTag(tag);
             textareaRef.current?.focus();
             debounceRef.current = setTimeout(() => commitMemo(), 2000);
-          } else {
-            // テキストなし → 0.6秒後に即投稿（アイコンのみ）
-            debounceRef.current = setTimeout(() => commitMemo(), 600);
           }
         }} />
       </header>
