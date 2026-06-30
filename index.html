@@ -1504,10 +1504,17 @@ function nowFormatted() {
 }
 
 /* ── Quick Log Bar ── */
-function QuickLogBar({ onSelect, onOpenDiary }) {
+function QuickLogBar({ onSelect, onOpenDiary, externalStatuses }) {
   const [statuses, setStatuses] = React.useState(() =>
     Object.fromEntries(STATUS_PAIRS.map(p => [p.key, localStorage.getItem(p.key) || p.defaultVal]))
   );
+
+  // memos変化（削除など）があったら外部ステータスで同期
+  React.useEffect(() => {
+    if (!externalStatuses) return;
+    setStatuses(externalStatuses);
+    Object.entries(externalStatuses).forEach(([k, v]) => localStorage.setItem(k, v));
+  }, [externalStatuses]);
 
   const handleStatus = (pair, picked) => {
     const next = picked;
@@ -2294,6 +2301,20 @@ function App() {
   const syncLabel = { offline: 'OFFLINE', syncing: 'SYNC...', synced: 'SYNCED' };
   const syncColor = { offline: 'rgba(240,230,255,0.2)', syncing: 'var(--pink)', synced: 'var(--cyan)' };
 
+  // memosの最新投稿からステータストグルの状態を導出（早期returnより前）
+  const statusFromMemos = React.useMemo(() => {
+    const result = {};
+    for (const pair of STATUS_PAIRS) {
+      const aTag = pair.a.emoji + ' ' + pair.a.label;
+      const bTag = pair.b.emoji + ' ' + pair.b.label;
+      const latest = memos.find(m => m.tag === aTag || m.tag === bTag);
+      result[pair.key] = latest
+        ? (latest.tag === aTag ? 'a' : 'b')
+        : (localStorage.getItem(pair.key) || pair.defaultVal);
+    }
+    return result;
+  }, [memos]);
+
   if (!authChecked) return null;
   if (!session) return <AuthScreen />;
 
@@ -2412,6 +2433,7 @@ function App() {
         </div>
 
         <QuickLogBar
+          externalStatuses={statusFromMemos}
           onOpenDiary={() => setShowDiary(true)}
           onSelect={(tag, opts) => {
             clearTimeout(debounceRef.current);
