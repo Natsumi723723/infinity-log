@@ -1438,27 +1438,48 @@ function HeartSVG({ id, size = 44 }) {
 
 /* ── Helpers ── */
 /* ── DiaryModal ── */
-function DiaryModal({ onClose, onPost }) {
-  const [main, setMain] = React.useState('');
-  const [get, setGet] = React.useState('');
-  const [people, setPeople] = React.useState('');
-  const [health, setHealth] = React.useState('');
+function parseDiaryText(text) {
+  if (!text) return { main: '', get: '', people: '', health: '' };
+  const blocks = text.split('\n\n');
+  let main = '', get = '', people = '', health = '';
+  for (const block of blocks) {
+    if (block.startsWith('🛍️ GET\n')) get = block.slice('🛍️ GET\n'.length);
+    else if (block.startsWith('🤝 人との関わり\n')) people = block.slice('🤝 人との関わり\n'.length);
+    else if (block.startsWith('🌡️ 体調\n')) health = block.slice('🌡️ 体調\n'.length);
+    else main = block;
+  }
+  return { main, get, people, health };
+}
 
-  const handlePost = () => {
+function DiaryModal({ onClose, onPost, onUpdate, existing }) {
+  const parsed = parseDiaryText(existing?.text);
+  const [main, setMain] = React.useState(parsed.main);
+  const [get, setGet] = React.useState(parsed.get);
+  const [people, setPeople] = React.useState(parsed.people);
+  const [health, setHealth] = React.useState(parsed.health);
+  const isEdit = !!existing;
+
+  const buildText = () => {
     const parts = [];
     if (main.trim()) parts.push(main.trim());
     if (get.trim()) parts.push(`🛍️ GET\n${get.trim()}`);
     if (people.trim()) parts.push(`🤝 人との関わり\n${people.trim()}`);
     if (health.trim()) parts.push(`🌡️ 体調\n${health.trim()}`);
-    if (!parts.length) return;
-    onPost(parts.join('\n\n'), '📕 日記');
+    return parts.join('\n\n');
+  };
+
+  const handleSave = () => {
+    const text = buildText();
+    if (!text) return;
+    if (isEdit) onUpdate(existing.id, text, '📕 日記');
+    else onPost(text, '📕 日記');
     onClose();
   };
 
   return (
     <div className="diary-modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="diary-modal">
-        <div className="diary-modal-header">📕 今日の日記</div>
+        <div className="diary-modal-header">📕 {isEdit ? '日記を編集' : '今日の日記'}</div>
         <div className="diary-section">
           <div className="diary-section-label">TODAY</div>
           <textarea className="diary-section-input" placeholder="今日あったこと、感じたこと…" value={main} onChange={e => setMain(e.target.value)} rows={4} />
@@ -1477,7 +1498,7 @@ function DiaryModal({ onClose, onPost }) {
         </div>
         <div className="diary-modal-footer">
           <button className="edit-cancel-btn" onClick={onClose}>CANCEL</button>
-          <button className="edit-save-btn" onClick={handlePost}>POST</button>
+          <button className="edit-save-btn" onClick={handleSave}>{isEdit ? 'SAVE' : 'POST'}</button>
         </div>
       </div>
     </div>
@@ -2332,7 +2353,12 @@ function App() {
   return (
     <>
       {editingCardId && <div className="edit-focus-overlay" />}
-      {showDiary && <DiaryModal onClose={() => setShowDiary(false)} onPost={diaryPostFn} />}
+      {showDiary && <DiaryModal
+        onClose={() => setShowDiary(false)}
+        onPost={diaryPostFn}
+        onUpdate={updateMemo}
+        existing={memos.find(m => m.tag === '📕 日記' && dateKey(m.created_at) === todayKey) || null}
+      />}
       {summaryTarget && (() => {
         const idx = sortedGroups.findIndex(g => g.dateStr === summaryTarget.dateStr);
         const prevGroup = idx < sortedGroups.length - 1 ? sortedGroups[idx + 1] : null;
