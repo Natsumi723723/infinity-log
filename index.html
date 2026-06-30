@@ -2350,13 +2350,28 @@ function App() {
     setSyncStatus('synced');
   };
 
+  // 日記上書き保存：created_atを現在時刻に更新してトップへ
+  const diaryUpdateFn = async (id, text, tag) => {
+    setSyncStatus('syncing');
+    const now = new Date().toISOString();
+    const { data, error } = await sb.from('diary_logs')
+      .update({ text: text || null, tag: tag || null, created_at: now })
+      .eq('id', id).select().single();
+    if (!error && data) {
+      setMemos(prev => [data, ...prev.filter(m => m.id !== id)]);
+      setNewIds(prev => new Set([...prev, id]));
+      setTimeout(() => setNewIds(prev => { const n = new Set(prev); n.delete(id); return n; }), 500);
+    }
+    setSyncStatus('synced');
+  };
+
   return (
     <>
       {editingCardId && <div className="edit-focus-overlay" />}
       {showDiary && <DiaryModal
         onClose={() => setShowDiary(false)}
         onPost={diaryPostFn}
-        onUpdate={updateMemo}
+        onUpdate={diaryUpdateFn}
         existing={memos.find(m => m.tag === '📕 日記' && dateKey(m.created_at) === todayKey) || null}
       />}
       {summaryTarget && (() => {
