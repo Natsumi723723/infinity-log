@@ -1913,6 +1913,11 @@ function App() {
               {syncLabel[syncStatus]}
             </div>
             <button className="theme-btn" onClick={() => setShowIdeaBook(true)} title="アイデア帳">💡</button>
+            {sessionKey !== realTodayKey && (
+              <button className="theme-btn" onClick={handleNewPage} title="今日のページを開く" style={{ fontSize: '11px', padding: '4px 8px' }}>
+                今日 →
+              </button>
+            )}
             <button className="theme-btn" onClick={toggleTheme} title="テーマ切り替え">
               {theme === 'dark' ? '☀️' : '🌙'}
             </button>
@@ -1977,16 +1982,6 @@ function App() {
       </div>
 
       <div className="timeline">
-        {!loading && (
-          <div className="new-page-wrap">
-            <div className="new-page-session-label">📖 {sessionDateStr}</div>
-            {sessionKey !== realTodayKey && (
-              <button className="new-page-btn" onClick={handleNewPage}>
-                今日のページを開く →
-              </button>
-            )}
-          </div>
-        )}
         {loading ? (
           <div className="loading-state">LOADING...</div>
         ) : sortedGroups.map(group => {
