@@ -985,7 +985,7 @@ function parseDiaryText(text) {
   return { main, get, people, health };
 }
 
-function DiaryModal({ onClose, onPost, onUpdate, existing }) {
+function DiaryModal({ onClose, onPost, onUpdate, existing, dateStr }) {
   const parsed = parseDiaryText(existing?.text);
   const [main, setMain] = React.useState(parsed.main);
   const [get, setGet] = React.useState(parsed.get);
@@ -1013,7 +1013,10 @@ function DiaryModal({ onClose, onPost, onUpdate, existing }) {
   return (
     <div className="diary-modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="diary-modal">
-        <div className="diary-modal-header">📕 {isEdit ? '日記を編集' : '今日の日記'}</div>
+        <div className="diary-modal-header">
+          <span style={{fontSize:'11px',color:'var(--text-muted)',fontFamily:'Rajdhani,sans-serif',letterSpacing:'0.1em'}}>{dateStr}</span>
+          <div>📕 {isEdit ? '日記を編集' : '日記を書く'}</div>
+        </div>
         <div className="diary-section">
           <div className="diary-section-label">TODAY</div>
           <textarea className="diary-section-input" placeholder="今日あったこと、感じたこと…" value={main} onChange={e => setMain(e.target.value)} rows={4} />
@@ -1383,12 +1386,13 @@ function DailySummary({ dateStr, memos, onClose, onPrev, onNext, isToday }) {
 }
 
 /* ── DateDivider ── */
-function DateDivider({ dateStr, isToday, onSummarize }) {
+function DateDivider({ dateStr, isToday, onSummarize, onOpenDiary }) {
   return (
     <div className="date-divider">
       <span className="date-label">{dateStr}</span>
       <div className="date-line" />
       {isToday && <span className="date-badge">TODAY</span>}
+      <button className="summary-btn" onClick={onOpenDiary} style={{marginRight:'6px'}}>📕</button>
       <button className="summary-btn" onClick={onSummarize}>✦ まとめ</button>
     </div>
   );
@@ -1461,7 +1465,7 @@ function App() {
   const pendingTodoRef = useRef(false);
   const [summaryTarget, setSummaryTarget] = useState(null); // {dateStr, memos}
   const [editingCardId, setEditingCardId] = useState(null);
-  const [showDiary, setShowDiary] = useState(false);
+  const [showDiary, setShowDiary] = useState(null); // { dateKey, dateStr } | null
 
   const headerRef = useRef(null);
 
@@ -1709,10 +1713,11 @@ function App() {
     <>
       {editingCardId && <div className="edit-focus-overlay" />}
       {showDiary && <DiaryModal
-        onClose={() => setShowDiary(false)}
+        onClose={() => setShowDiary(null)}
         onPost={diaryPostFn}
         onUpdate={diaryUpdateFn}
-        existing={memos.find(m => m.tag === '📕 日記' && dateKey(m.created_at) === todayKey) || null}
+        dateStr={showDiary.dateStr}
+        existing={memos.find(m => m.tag === '📕 日記' && dateKey(m.created_at) === showDiary.dateKey) || null}
       />}
       {summaryTarget && (() => {
         const idx = sortedGroups.findIndex(g => g.dateStr === summaryTarget.dateStr);
@@ -1787,7 +1792,7 @@ function App() {
 
         <QuickLogBar
           externalStatuses={statusFromMemos}
-          onOpenDiary={() => setShowDiary(true)}
+          onOpenDiary={() => setShowDiary({ dateKey: todayKey, dateStr: nowFormatted() })}
           onSelect={(tag, opts) => {
             clearTimeout(debounceRef.current);
             if (!draft.trim()) {
@@ -1812,6 +1817,7 @@ function App() {
               dateStr={group.dateStr}
               isToday={group.key === todayKey}
               onSummarize={() => setSummaryTarget({ dateStr: group.dateStr, memos: group.memos })}
+              onOpenDiary={() => setShowDiary({ dateKey: group.key, dateStr: group.dateStr })}
             />
             {group.memos.map(memo => (
               <MemoCard
