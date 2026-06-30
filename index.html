@@ -698,7 +698,52 @@
     letter-spacing: 0.08em;
   }
 
-  /* 削除確認ポップアップ */
+  /* ====== IDEA BOOK ====== */
+  .idea-book-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .idea-book-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    color: var(--pink);
+  }
+  .idea-book-count {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+  .idea-book-empty {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 40px 0;
+    letter-spacing: 0.08em;
+  }
+  .idea-item {
+    border-left: 2px solid var(--pink);
+    padding: 8px 0 8px 14px;
+    margin-bottom: 16px;
+  }
+  .idea-item-meta {
+    font-family: 'Orbitron', monospace;
+    font-size: 8px;
+    letter-spacing: 0.15em;
+    color: #E91E8C;
+    margin-bottom: 4px;
+  }
+  .idea-item-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-main);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* ====== 削除確認ポップアップ */
   .delete-confirm-overlay {
     position: fixed;
     inset: 0;
@@ -1396,6 +1441,32 @@ function DailySummary({ dateStr, memos, onClose, onPrev, onNext, isToday }) {
   );
 }
 
+/* ── IdeaBook ── */
+function IdeaBook({ memos, onClose }) {
+  const ideas = memos.filter(m => m.tag === '💡 アイデア' && m.text);
+  return (
+    <div className="summary-overlay" onClick={onClose}>
+      <div className="summary-sheet" onClick={e => e.stopPropagation()}>
+        <div className="idea-book-header">
+          <div className="idea-book-title">💡 IDEA BOOK</div>
+          <div className="idea-book-count">{ideas.length} ideas</div>
+        </div>
+        {ideas.length === 0 ? (
+          <div className="idea-book-empty">まだアイデアがありません</div>
+        ) : (
+          ideas.map(m => (
+            <div key={m.id} className="idea-item">
+              <div className="idea-item-meta">{formatDate(m.created_at)} {formatTime(m.created_at)}</div>
+              <div className="idea-item-text">{m.text}</div>
+            </div>
+          ))
+        )}
+        <button className="summary-close" onClick={onClose}>閉じる</button>
+      </div>
+    </div>
+  );
+}
+
 /* ── DateDivider ── */
 function DateDivider({ dateStr, isToday, onSummarize, onOpenDiary }) {
   return (
@@ -1477,6 +1548,7 @@ function App() {
   const [summaryTarget, setSummaryTarget] = useState(null); // {dateStr, memos}
   const [editingCardId, setEditingCardId] = useState(null);
   const [showDiary, setShowDiary] = useState(null); // { dateKey, dateStr } | null
+  const [showIdeaBook, setShowIdeaBook] = useState(false);
 
   const headerRef = useRef(null);
 
@@ -1723,6 +1795,7 @@ function App() {
   return (
     <>
       {editingCardId && <div className="edit-focus-overlay" />}
+      {showIdeaBook && <IdeaBook memos={memos} onClose={() => setShowIdeaBook(false)} />}
       {showDiary && <DiaryModal
         onClose={() => setShowDiary(null)}
         onPost={diaryPostFn}
@@ -1757,6 +1830,7 @@ function App() {
               {syncLabel[syncStatus]}
             </div>
 
+            <button className="theme-btn" onClick={() => setShowIdeaBook(true)} title="アイデア帳">💡</button>
             <button className="theme-btn" onClick={toggleTheme} title="テーマ切り替え">
               {theme === 'dark' ? '☀️' : '🌙'}
             </button>
