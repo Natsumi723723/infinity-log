@@ -500,6 +500,24 @@
     box-shadow: 0 0 12px rgba(233,30,140,0.06);
   }
 
+  /* ── Edit Focus Overlay ── */
+  .edit-focus-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 200;
+    pointer-events: none;
+  }
+  .memo-card-wrap.is-editing {
+    position: relative;
+    z-index: 201;
+    pointer-events: auto;
+  }
+  .memo-card-wrap.is-editing .memo-card {
+    border-color: rgba(233,30,140,0.6);
+    box-shadow: 0 0 20px rgba(233,30,140,0.15);
+  }
+
   /* ── Daily Summary ── */
   .summary-btn {
     background: transparent;
@@ -1520,7 +1538,7 @@ function DeleteConfirm({ onCancel, onConfirm }) {
 }
 
 /* ── MemoCard ── */
-function MemoCard({ memo, isNew, onUpdate, onDelete, activePersona, apiKey, customIcons, onIconChange, onNeedApiKey }) {
+function MemoCard({ memo, isNew, onUpdate, onDelete, activePersona, apiKey, customIcons, onIconChange, onNeedApiKey, onEditStart, onEditEnd }) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(memo.text);
   const [editTag, setEditTag] = useState(memo.tag);
@@ -1582,16 +1600,19 @@ function MemoCard({ memo, isNew, onUpdate, onDelete, activePersona, apiKey, cust
     }
   }, [editing]);
 
+  const startEditing = () => { setEditing(true); onEditStart && onEditStart(memo.id); };
+  const stopEditing = () => { setEditing(false); onEditEnd && onEditEnd(); };
+
   const handleSave = async () => {
     await onUpdate(memo.id, editText.trim(), editTag);
-    setEditing(false);
+    stopEditing();
   };
 
   const handleCancel = () => {
     setEditText(memo.text);
     setEditTag(memo.tag);
     setShowTagPicker(false);
-    setEditing(false);
+    stopEditing();
   };
 
   const handleKeyDown = (e) => {
@@ -1629,12 +1650,12 @@ function MemoCard({ memo, isNew, onUpdate, onDelete, activePersona, apiKey, cust
   };
 
   return (
-    <div className="memo-card-wrap">
+    <div className={`memo-card-wrap${editing ? ' is-editing' : ''}`}>
       {swipeX < 0 && <div className="memo-card-delete-bg" style={{opacity: Math.min(1, Math.abs(swipeX)/60)}}>DELETE</div>}
       {showDeleteConfirm && <DeleteConfirm onCancel={handleDeleteCancel} onConfirm={handleDeleteConfirm} />}
     <div
       className={`memo-card ${isNew ? 'new-entry' : ''} ${editing ? 'editing' : ''}`}
-      onClick={() => { if (!editing) setEditing(true); }}
+      onClick={() => { if (!editing) startEditing(); }}
       style={{ cursor: editing ? 'default' : 'text', transform: `translateX(${swipeX}px)`, transition: swipeX === 0 ? 'transform 0.2s ease' : 'none' }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -1907,6 +1928,7 @@ function App() {
   const pendingTagRef = useRef(null);
   const pendingTodoRef = useRef(false);
   const [summaryTarget, setSummaryTarget] = useState(null); // {dateStr, memos}
+  const [editingCardId, setEditingCardId] = useState(null);
 
   /* Persona & AI state */
   const [activePersona, setActivePersona] = useState(() => localStorage.getItem('il-persona') || 'heartrun');
@@ -2122,6 +2144,7 @@ function App() {
 
   return (
     <>
+      {editingCardId && <div className="edit-focus-overlay" />}
       {summaryTarget && (() => {
         const idx = sortedGroups.findIndex(g => g.dateStr === summaryTarget.dateStr);
         const prevGroup = idx < sortedGroups.length - 1 ? sortedGroups[idx + 1] : null;
@@ -2226,9 +2249,14 @@ function App() {
           pendingTodoRef.current = !!(opts && opts.todo);
           setPendingTag(tag);
           clearTimeout(debounceRef.current);
-          textareaRef.current?.focus();
-          // コメントなしで1.5秒放置したら自動保存
-          debounceRef.current = setTimeout(() => commitMemo(), 1500);
+          if (draft.trim()) {
+            // テキストあり → フォーカスして2秒待つ
+            textareaRef.current?.focus();
+            debounceRef.current = setTimeout(() => commitMemo(), 2000);
+          } else {
+            // テキストなし → 0.6秒後に即投稿（アイコンのみ）
+            debounceRef.current = setTimeout(() => commitMemo(), 600);
+          }
         }} />
       </header>
 
@@ -2254,6 +2282,8 @@ function App() {
                 customIcons={customIcons}
                 onIconChange={handleIconChange}
                 onNeedApiKey={() => setShowSettings(true)}
+                onEditStart={(id) => setEditingCardId(id)}
+                onEditEnd={() => setEditingCardId(null)}
               />
             ))}
           </div>
