@@ -403,6 +403,59 @@
     box-shadow: 0 0 10px rgba(233,30,140,0.2);
     transform: scale(1.12);
   }
+  .quick-btn--status {
+    border-color: rgba(233,30,140,0.4);
+    background: rgba(233,30,140,0.08);
+  }
+  .quick-btn--diary {
+    border-color: rgba(233,30,140,0.6);
+    background: rgba(233,30,140,0.12);
+    box-shadow: 0 0 8px rgba(233,30,140,0.15);
+  }
+  .quick-btn--diary-tag {
+    opacity: 0.85;
+    border-style: dashed;
+  }
+  /* 日記モーダル */
+  .diary-modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 1000;
+    display: flex; align-items: flex-end; justify-content: center;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .diary-modal {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px 12px 0 0;
+    width: 100%; max-width: 680px;
+    padding: 20px 20px 40px;
+    max-height: 85vh; overflow-y: auto;
+  }
+  .diary-modal-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 16px;
+    font-family: var(--font-heading); font-size: 13px; letter-spacing: 0.1em;
+    color: var(--pink);
+  }
+  .diary-section {
+    margin-bottom: 14px;
+  }
+  .diary-section-label {
+    font-size: 11px; color: var(--text-muted);
+    letter-spacing: 0.08em; margin-bottom: 4px;
+  }
+  .diary-section-input {
+    width: 100%; background: var(--memo-bg);
+    border: 1px solid var(--memo-border); border-radius: 4px;
+    color: var(--text); font-size: 14px; line-height: 1.6;
+    padding: 8px 10px; resize: none; min-height: 60px;
+    font-family: inherit;
+  }
+  .diary-section-input:focus { outline: none; border-color: var(--pink); }
+  .diary-modal-footer {
+    display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;
+  }
 
   /* ====== TIMELINE ====== */
   .timeline {
@@ -1214,9 +1267,14 @@ const sb = supabase.createClient(SB_URL, SB_KEY, {
 });
 
 /* ── Quick log tags ── */
-const QUICK_TAGS = [
-  { emoji: '☀️', label: 'おはよう' },
-  { emoji: '💤', label: '睡眠' },
+// ステータストグルペア（片方だけ表示）
+const STATUS_PAIRS = [
+  { a: { emoji: '☀️', label: 'おはよう' }, b: { emoji: '💤', label: '睡眠' }, key: 'il-status-morning', defaultVal: 'a' },
+  { a: { emoji: '🌳', label: '行ってきます' }, b: { emoji: '🎪', label: 'ただいま' }, key: 'il-status-location', defaultVal: 'a' },
+];
+
+// 常時表示タグ
+const ALWAYS_TAGS = [
   { emoji: '🩷', label: 'ポジティブ' },
   { emoji: '🖤', label: 'ネガティブ' },
   { emoji: '💡', label: 'アイデア' },
@@ -1224,15 +1282,20 @@ const QUICK_TAGS = [
   { emoji: '💘', label: 'ラブ' },
   { emoji: '🔍', label: '調べたこと' },
   { emoji: '✨', label: '気づき' },
-  { emoji: '🛍️', label: 'GET' },
-  { emoji: '🤝', label: '人との関わり' },
   { emoji: '📖', label: 'インプット' },
   { emoji: '✍️', label: 'アウトプット' },
-  { emoji: '🌳', label: '行ってきます' },
-  { emoji: '🎪', label: 'ただいま' },
   { emoji: '✅', label: 'TODO', todo: true },
+];
+
+// 日記入力時のみ表示
+const DIARY_TAGS = [
+  { emoji: '🛍️', label: 'GET' },
+  { emoji: '🤝', label: '人との関わり' },
   { emoji: '🌡️', label: '体調' },
 ];
+
+// 後方互換用（タグピッカーなどで使用）
+const QUICK_TAGS = [...ALWAYS_TAGS, ...DIARY_TAGS];
 
 /* ── Character definitions ── */
 const CHARACTERS = {
@@ -1374,6 +1437,53 @@ function HeartSVG({ id, size = 44 }) {
 }
 
 /* ── Helpers ── */
+/* ── DiaryModal ── */
+function DiaryModal({ onClose, onPost }) {
+  const [main, setMain] = React.useState('');
+  const [get, setGet] = React.useState('');
+  const [people, setPeople] = React.useState('');
+  const [health, setHealth] = React.useState('');
+
+  const handlePost = () => {
+    const parts = [];
+    if (main.trim()) parts.push(main.trim());
+    if (get.trim()) parts.push(`🛍️ GET\n${get.trim()}`);
+    if (people.trim()) parts.push(`🤝 人との関わり\n${people.trim()}`);
+    if (health.trim()) parts.push(`🌡️ 体調\n${health.trim()}`);
+    if (!parts.length) return;
+    onPost(parts.join('\n\n'), '📕 日記');
+    onClose();
+  };
+
+  return (
+    <div className="diary-modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="diary-modal">
+        <div className="diary-modal-header">📕 今日の日記</div>
+        <div className="diary-section">
+          <div className="diary-section-label">TODAY</div>
+          <textarea className="diary-section-input" placeholder="今日あったこと、感じたこと…" value={main} onChange={e => setMain(e.target.value)} rows={4} />
+        </div>
+        <div className="diary-section">
+          <div className="diary-section-label">🛍️ GET</div>
+          <textarea className="diary-section-input" placeholder="手に入れたもの、買ったもの…" value={get} onChange={e => setGet(e.target.value)} rows={2} />
+        </div>
+        <div className="diary-section">
+          <div className="diary-section-label">🤝 人との関わり</div>
+          <textarea className="diary-section-input" placeholder="会った人、話した人…" value={people} onChange={e => setPeople(e.target.value)} rows={2} />
+        </div>
+        <div className="diary-section">
+          <div className="diary-section-label">🌡️ 体調</div>
+          <textarea className="diary-section-input" placeholder="体の調子、気分…" value={health} onChange={e => setHealth(e.target.value)} rows={2} />
+        </div>
+        <div className="diary-modal-footer">
+          <button className="edit-cancel-btn" onClick={onClose}>CANCEL</button>
+          <button className="edit-save-btn" onClick={handlePost}>POST</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 function formatDate(ts) {
@@ -1394,19 +1504,37 @@ function nowFormatted() {
 }
 
 /* ── Quick Log Bar ── */
-function QuickLogBar({ onSelect }) {
+function QuickLogBar({ onSelect, onOpenDiary }) {
+  const [statuses, setStatuses] = React.useState(() =>
+    Object.fromEntries(STATUS_PAIRS.map(p => [p.key, localStorage.getItem(p.key) || p.defaultVal]))
+  );
+
+  const handleStatus = (pair, picked) => {
+    const next = picked === 'a' ? 'b' : 'a';
+    localStorage.setItem(pair.key, next);
+    setStatuses(prev => ({ ...prev, [pair.key]: next }));
+    const tag = picked === 'a' ? pair.a : pair.b;
+    onSelect(tag.emoji + ' ' + tag.label, {});
+  };
+
   return (
     <div className="quick-log-wrapper">
-      {QUICK_TAGS.map(({ emoji, label, todo }) => (
-        <button
-          key={label}
-          className="quick-btn"
-          onClick={() => onSelect(emoji + ' ' + label, { todo })}
-          title={label}
-        >
+      {STATUS_PAIRS.map(pair => {
+        const cur = statuses[pair.key];
+        const show = cur === 'a' ? pair.b : pair.a;
+        const picked = cur === 'a' ? 'b' : 'a';
+        return (
+          <button key={pair.key} className="quick-btn quick-btn--status" onClick={() => handleStatus(pair, picked)} title={show.label}>
+            {show.emoji}
+          </button>
+        );
+      })}
+      {ALWAYS_TAGS.map(({ emoji, label, todo }) => (
+        <button key={label} className="quick-btn" onClick={() => onSelect(emoji + ' ' + label, { todo })} title={label}>
           {emoji}
         </button>
       ))}
+      <button className="quick-btn quick-btn--diary" onClick={onOpenDiary} title="日記">📕</button>
     </div>
   );
 }
@@ -1929,6 +2057,7 @@ function App() {
   const pendingTodoRef = useRef(false);
   const [summaryTarget, setSummaryTarget] = useState(null); // {dateStr, memos}
   const [editingCardId, setEditingCardId] = useState(null);
+  const [showDiary, setShowDiary] = useState(false);
 
   /* Persona & AI state */
   const [activePersona, setActivePersona] = useState(() => localStorage.getItem('il-persona') || 'heartrun');
@@ -2270,20 +2399,36 @@ function App() {
           </div>
         </div>
 
-        <QuickLogBar onSelect={(tag, opts) => {
-          clearTimeout(debounceRef.current);
-          if (!draft.trim()) {
-            // テキストなし → アイコンのみで即時投稿
-            postTagOnly(tag);
-          } else {
-            // テキストあり → タグ付きで通常投稿
-            pendingTagRef.current = tag;
-            pendingTodoRef.current = !!(opts && opts.todo);
-            setPendingTag(tag);
-            textareaRef.current?.focus();
-            debounceRef.current = setTimeout(() => commitMemo(), 2000);
-          }
-        }} />
+        <QuickLogBar
+          onOpenDiary={() => setShowDiary(true)}
+          onSelect={(tag, opts) => {
+            clearTimeout(debounceRef.current);
+            if (!draft.trim()) {
+              postTagOnly(tag);
+            } else {
+              pendingTagRef.current = tag;
+              pendingTodoRef.current = !!(opts && opts.todo);
+              setPendingTag(tag);
+              textareaRef.current?.focus();
+              debounceRef.current = setTimeout(() => commitMemo(), 2000);
+            }
+          }}
+        />
+        {showDiary && (
+          <DiaryModal
+            onClose={() => setShowDiary(false)}
+            onPost={async (text, tag) => {
+              setSyncStatus('syncing');
+              const { data, error } = await sb.from('diary_logs').insert({ text, tag, user_id: session.user.id }).select().single();
+              if (!error && data) {
+                setMemos(prev => prev.find(m => m.id === data.id) ? prev : [data, ...prev]);
+                setNewIds(prev => new Set([...prev, data.id]));
+                setTimeout(() => setNewIds(prev => { const n = new Set(prev); n.delete(data.id); return n; }), 500);
+              }
+              setSyncStatus('synced');
+            }}
+          />
+        )}
       </header>
 
       <div className="timeline">
