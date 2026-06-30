@@ -419,18 +419,18 @@
   /* 日記モーダル */
   .diary-modal-overlay {
     position: fixed; inset: 0;
-    background: rgba(0,0,0,0.75);
+    background: var(--bg);
     z-index: 1000;
-    display: flex; align-items: flex-end; justify-content: center;
-    padding-bottom: env(safe-area-inset-bottom);
+    display: flex; flex-direction: column;
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
   }
   .diary-modal {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 12px 12px 0 0;
+    flex: 1;
+    display: flex; flex-direction: column;
     width: 100%; max-width: 680px;
-    padding: 20px 20px 40px;
-    max-height: 85vh; overflow-y: auto;
+    margin: 0 auto;
+    padding: 16px 20px 20px;
+    overflow-y: auto;
   }
   .diary-modal-header {
     display: flex; align-items: center; gap: 8px;
@@ -2297,9 +2297,21 @@ function App() {
   if (!authChecked) return null;
   if (!session) return <AuthScreen />;
 
+  const diaryPostFn = async (text, tag) => {
+    setSyncStatus('syncing');
+    const { data, error } = await sb.from('diary_logs').insert({ text, tag, user_id: session.user.id }).select().single();
+    if (!error && data) {
+      setMemos(prev => prev.find(m => m.id === data.id) ? prev : [data, ...prev]);
+      setNewIds(prev => new Set([...prev, data.id]));
+      setTimeout(() => setNewIds(prev => { const n = new Set(prev); n.delete(data.id); return n; }), 500);
+    }
+    setSyncStatus('synced');
+  };
+
   return (
     <>
       {editingCardId && <div className="edit-focus-overlay" />}
+      {showDiary && <DiaryModal onClose={() => setShowDiary(false)} onPost={diaryPostFn} />}
       {summaryTarget && (() => {
         const idx = sortedGroups.findIndex(g => g.dateStr === summaryTarget.dateStr);
         const prevGroup = idx < sortedGroups.length - 1 ? sortedGroups[idx + 1] : null;
@@ -2414,21 +2426,6 @@ function App() {
             }
           }}
         />
-        {showDiary && (
-          <DiaryModal
-            onClose={() => setShowDiary(false)}
-            onPost={async (text, tag) => {
-              setSyncStatus('syncing');
-              const { data, error } = await sb.from('diary_logs').insert({ text, tag, user_id: session.user.id }).select().single();
-              if (!error && data) {
-                setMemos(prev => prev.find(m => m.id === data.id) ? prev : [data, ...prev]);
-                setNewIds(prev => new Set([...prev, data.id]));
-                setTimeout(() => setNewIds(prev => { const n = new Set(prev); n.delete(data.id); return n; }), 500);
-              }
-              setSyncStatus('synced');
-            }}
-          />
-        )}
       </header>
 
       <div className="timeline">
