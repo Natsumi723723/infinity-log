@@ -433,9 +433,17 @@
     max-height: 88vh; overflow-y: auto;
   }
   .diary-modal-header {
-    display: flex; align-items: center; gap: 8px;
+    display: flex; flex-direction: column; gap: 4px;
     margin-bottom: 16px;
-    font-family: var(--font-heading); font-size: 13px; letter-spacing: 0.1em;
+  }
+  .diary-modal-header span {
+    font-family: 'Orbitron', monospace; font-size: 10px; letter-spacing: 0.2em;
+    color: white; background: var(--pink);
+    display: inline-block; padding: 2px 8px; border-radius: 3px;
+    width: fit-content;
+  }
+  .diary-modal-header div {
+    font-family: var(--font-heading); font-size: 14px; letter-spacing: 0.1em;
     color: var(--pink);
   }
   .diary-section {
