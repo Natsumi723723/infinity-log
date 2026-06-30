@@ -698,6 +698,38 @@
     letter-spacing: 0.08em;
   }
 
+  /* ====== NEW PAGE HEADER ====== */
+  .new-page-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px 10px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+  .new-page-session-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--text-muted);
+  }
+  .new-page-btn {
+    background: none;
+    border: 1px solid var(--pink);
+    border-radius: 20px;
+    color: var(--pink);
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    padding: 5px 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .new-page-btn:hover {
+    background: rgba(233,30,140,0.1);
+    box-shadow: 0 0 10px rgba(233,30,140,0.3);
+  }
+
   /* ====== IDEA BOOK ====== */
   .idea-book-header {
     display: flex;
@@ -1549,6 +1581,10 @@ function App() {
   const [editingCardId, setEditingCardId] = useState(null);
   const [showDiary, setShowDiary] = useState(null); // { dateKey, dateStr } | null
   const [showIdeaBook, setShowIdeaBook] = useState(false);
+  const [sessionKey, setSessionKey] = useState(
+    () => localStorage.getItem('il-session-key') || dateKey(Date.now())
+  );
+  const sessionKeyRef = useRef(sessionKey);
 
   const headerRef = useRef(null);
 
@@ -1558,6 +1594,23 @@ function App() {
   }, [theme]);
 
   const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
+
+  useEffect(() => { sessionKeyRef.current = sessionKey; }, [sessionKey]);
+
+  const handleNewPage = () => {
+    const key = dateKey(Date.now());
+    localStorage.setItem('il-session-key', key);
+    setSessionKey(key);
+    sessionKeyRef.current = key;
+  };
+
+  // セッション日付のtimestampを生成（sessionKey = "YYYY-M0based-D"）
+  const getSessionTs = () => {
+    const parts = sessionKeyRef.current.split('-').map(Number);
+    const now = new Date();
+    return new Date(parts[0], parts[1], parts[2], now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds()).toISOString();
+  };
+
   const textareaRef = useRef(null);
   const debounceRef = useRef(null);
   const savedTimerRef = useRef(null);
@@ -1634,8 +1687,9 @@ function App() {
     setPendingTag(null);
     setSyncStatus('syncing');
 
+    const sessionTs = getSessionTs();
     if (DEMO_MODE) {
-      const fake = { id: String(Date.now()), text: text || null, tag: tag || null, created_at: new Date().toISOString(), user_id: 'demo' };
+      const fake = { id: String(Date.now()), text: text || null, tag: tag || null, created_at: sessionTs, user_id: 'demo' };
       setMemos(prev => [fake, ...prev]);
       setNewIds(prev => new Set([...prev, fake.id]));
       setTimeout(() => setNewIds(prev => { const n = new Set(prev); n.delete(fake.id); return n; }), 500);
@@ -1646,7 +1700,7 @@ function App() {
       return;
     }
 
-    const { data, error } = await sb.from('diary_logs').insert({ text: text || null, tag: tag || null, user_id: session.user.id }).select().single();
+    const { data, error } = await sb.from('diary_logs').insert({ text: text || null, tag: tag || null, user_id: session.user.id, created_at: sessionTs }).select().single();
     if (!error && data) {
       setMemos(prev => {
         if (prev.find(m => m.id === data.id)) return prev;
@@ -1666,8 +1720,9 @@ function App() {
   const postTagOnly = useCallback(async (tag) => {
     if (!tag) return;
     setSyncStatus('syncing');
+    const sessionTs = getSessionTs();
     if (DEMO_MODE) {
-      const fake = { id: String(Date.now()), text: null, tag, created_at: new Date().toISOString(), user_id: 'demo' };
+      const fake = { id: String(Date.now()), text: null, tag, created_at: sessionTs, user_id: 'demo' };
       setMemos(prev => [fake, ...prev]);
       setNewIds(prev => new Set([...prev, fake.id]));
       setTimeout(() => setNewIds(prev => { const n = new Set(prev); n.delete(fake.id); return n; }), 500);
@@ -1677,7 +1732,7 @@ function App() {
       savedTimerRef.current = setTimeout(() => setSavedVisible(false), 2000);
       return;
     }
-    const { data, error } = await sb.from('diary_logs').insert({ text: null, tag, user_id: session.user.id }).select().single();
+    const { data, error } = await sb.from('diary_logs').insert({ text: null, tag, user_id: session.user.id, created_at: sessionTs }).select().single();
     if (!error && data) {
       setMemos(prev => prev.find(m => m.id === data.id) ? prev : [data, ...prev]);
       setNewIds(prev => new Set([...prev, data.id]));
@@ -1744,7 +1799,10 @@ function App() {
   const sortedGroups = Object.values(groupMap).sort((a,b) =>
     new Date(b.memos[0].created_at) - new Date(a.memos[0].created_at)
   );
-  const todayKey = dateKey(Date.now());
+  const realTodayKey = dateKey(Date.now());
+  // セッション日付の表示文字列
+  const sessionDateParts = sessionKey.split('-').map(Number);
+  const sessionDateStr = formatDate(new Date(sessionDateParts[0], sessionDateParts[1], sessionDateParts[2]).toISOString());
 
   const syncLabel = { offline: 'OFFLINE', syncing: 'SYNC...', synced: 'SYNCED' };
   const syncColor = { offline: 'rgba(240,230,255,0.2)', syncing: 'var(--pink)', synced: 'var(--cyan)' };
@@ -1768,7 +1826,7 @@ function App() {
 
   const diaryPostFn = async (text, tag) => {
     setSyncStatus('syncing');
-    const { data, error } = await sb.from('diary_logs').insert({ text, tag, user_id: session.user.id }).select().single();
+    const { data, error } = await sb.from('diary_logs').insert({ text, tag, user_id: session.user.id, created_at: getSessionTs() }).select().single();
     if (!error && data) {
       setMemos(prev => prev.find(m => m.id === data.id) ? prev : [data, ...prev]);
       setNewIds(prev => new Set([...prev, data.id]));
@@ -1777,10 +1835,10 @@ function App() {
     setSyncStatus('synced');
   };
 
-  // 日記上書き保存：created_atを現在時刻に更新してトップへ
+  // 日記上書き保存：created_atをセッション日付の最新時刻に更新してトップへ
   const diaryUpdateFn = async (id, text, tag) => {
     setSyncStatus('syncing');
-    const now = new Date().toISOString();
+    const now = getSessionTs();
     const { data, error } = await sb.from('diary_logs')
       .update({ text: text || null, tag: tag || null, created_at: now })
       .eq('id', id).select().single();
@@ -1811,7 +1869,7 @@ function App() {
           <DailySummary
             dateStr={summaryTarget.dateStr}
             memos={summaryTarget.memos}
-            isToday={sortedGroups[idx]?.key === todayKey}
+            isToday={sortedGroups[idx]?.key === sessionKey}
             onClose={() => setSummaryTarget(null)}
             onPrev={prevGroup ? () => setSummaryTarget({ dateStr: prevGroup.dateStr, memos: prevGroup.memos }) : null}
             onNext={nextGroup ? () => setSummaryTarget({ dateStr: nextGroup.dateStr, memos: nextGroup.memos }) : null}
@@ -1877,7 +1935,7 @@ function App() {
 
         <QuickLogBar
           externalStatuses={statusFromMemos}
-          onOpenDiary={() => setShowDiary({ dateKey: todayKey, dateStr: nowFormatted() })}
+          onOpenDiary={() => setShowDiary({ dateKey: sessionKey, dateStr: sessionDateStr })}
           onSelect={(tag, opts) => {
             clearTimeout(debounceRef.current);
             if (!draft.trim()) {
@@ -1894,29 +1952,42 @@ function App() {
       </header>
 
       <div className="timeline">
+        {!loading && (
+          <div className="new-page-wrap">
+            <div className="new-page-session-label">📖 {sessionDateStr}</div>
+            {sessionKey !== realTodayKey && (
+              <button className="new-page-btn" onClick={handleNewPage}>
+                今日のページを開く →
+              </button>
+            )}
+          </div>
+        )}
         {loading ? (
           <div className="loading-state">LOADING...</div>
-        ) : sortedGroups.map(group => (
-          <div key={group.key}>
-            <DateDivider
-              dateStr={group.dateStr}
-              isToday={group.key === todayKey}
-              onSummarize={() => setSummaryTarget({ dateStr: group.dateStr, memos: group.memos })}
-              onOpenDiary={() => setShowDiary({ dateKey: group.key, dateStr: group.dateStr })}
-            />
-            {group.memos.map(memo => (
-              <MemoCard
-                key={memo.id}
-                memo={memo}
-                isNew={newIds.has(memo.id)}
-                onUpdate={updateMemo}
-                onDelete={deleteMemo}
-                onEditStart={(id) => setEditingCardId(id)}
-                onEditEnd={() => setEditingCardId(null)}
+        ) : sortedGroups.map(group => {
+          const ascMemos = [...group.memos].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+          return (
+            <div key={group.key}>
+              <DateDivider
+                dateStr={group.dateStr}
+                isToday={group.key === sessionKey}
+                onSummarize={() => setSummaryTarget({ dateStr: group.dateStr, memos: group.memos })}
+                onOpenDiary={() => setShowDiary({ dateKey: group.key, dateStr: group.dateStr })}
               />
-            ))}
-          </div>
-        ))}
+              {ascMemos.map(memo => (
+                <MemoCard
+                  key={memo.id}
+                  memo={memo}
+                  isNew={newIds.has(memo.id)}
+                  onUpdate={updateMemo}
+                  onDelete={deleteMemo}
+                  onEditStart={(id) => setEditingCardId(id)}
+                  onEditEnd={() => setEditingCardId(null)}
+                />
+              ))}
+            </div>
+          );
+        })}
       </div>
 
     </>
