@@ -1114,11 +1114,14 @@ function QuickLogBar({ onSelect, onOpenDiary, externalStatuses }) {
 
 
 /* ── DeleteConfirm ── */
-function DeleteConfirm({ onCancel, onConfirm }) {
+function DeleteConfirm({ onCancel, onConfirm, memo }) {
+  const preview = memo.text
+    ? `「${memo.text.slice(0, 15)}${memo.text.length > 15 ? '…' : ''}」`
+    : memo.tag || 'この記録';
   return (
     <div className="delete-confirm-overlay" onClick={onCancel}>
       <div className="delete-confirm-box" onClick={e => e.stopPropagation()}>
-        <p>この記録を削除しますか？<br/>元に戻せません。</p>
+        <p>{preview} を削除しますか？<br/>元に戻せません。</p>
         <div className="delete-confirm-actions">
           <button onClick={onCancel}>キャンセル</button>
           <button className="btn-delete" onClick={onConfirm}>削除</button>
@@ -1218,7 +1221,7 @@ function MemoCard({ memo, isNew, onUpdate, onDelete, onEditStart, onEditEnd }) {
   return (
     <div className={`memo-card-wrap${editing ? ' is-editing' : ''}`}>
       {swipeX < 0 && <div className="memo-card-delete-bg" style={{opacity: Math.min(1, Math.abs(swipeX)/60)}}>DELETE</div>}
-      {showDeleteConfirm && <DeleteConfirm onCancel={handleDeleteCancel} onConfirm={handleDeleteConfirm} />}
+      {showDeleteConfirm && <DeleteConfirm onCancel={handleDeleteCancel} onConfirm={handleDeleteConfirm} memo={memo} />}
     <div
       className={`memo-card ${isNew ? 'new-entry' : ''} ${editing ? 'editing' : ''}`}
       onClick={() => { if (!editing) startEditing(); }}
