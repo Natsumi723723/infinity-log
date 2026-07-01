@@ -362,14 +362,40 @@
   .quick-log-wrapper {
     max-width: 680px;
     margin: 0 auto;
-    padding: 8px 16px 4px;
+    padding: 6px 16px 4px;
     display: flex;
     flex-wrap: nowrap;
     overflow-x: auto;
     gap: 6px;
     scrollbar-width: none;
+    border-top: 1px solid var(--border);
   }
   .quick-log-wrapper::-webkit-scrollbar { display: none; }
+  .quick-log-wrapper.hidden { display: none; }
+
+  /* + toggle button */
+  .icon-toggle-btn {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--memo-border);
+    background: var(--memo-bg);
+    color: var(--text-muted);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: all 0.15s;
+  }
+  .icon-toggle-btn.open {
+    border-color: var(--pink);
+    color: var(--pink);
+    background: rgba(233,30,140,0.1);
+  }
 
   .quick-btn {
     width: 34px;
@@ -1168,7 +1194,7 @@ function nowFormatted() {
 }
 
 /* ── Quick Log Bar ── */
-function QuickLogBar({ onSelect, onOpenDiary, externalStatuses }) {
+function QuickLogBar({ onSelect, onOpenDiary, externalStatuses, iconsOpen }) {
   const [statuses, setStatuses] = React.useState(() =>
     Object.fromEntries(STATUS_PAIRS.map(p => [p.key, localStorage.getItem(p.key) || p.defaultVal]))
   );
@@ -1597,6 +1623,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState('');
   const [focused, setFocused] = useState(false);
+  const [iconsOpen, setIconsOpen] = useState(false);
   const [savedVisible, setSavedVisible] = useState(false);
   const [syncStatus, setSyncStatus] = useState('offline');
   const [newIds, setNewIds] = useState(new Set());
@@ -1925,16 +1952,18 @@ function App() {
       <div className="bottom-bar">
         <QuickLogBar
           externalStatuses={statusFromMemos}
+          iconsOpen={iconsOpen}
           onOpenDiary={() => setShowDiary({ dateKey: sessionKey, dateStr: sessionDateStr })}
           onSelect={(tag, opts) => {
             pendingTagRef.current = tag;
             pendingTodoRef.current = !!(opts && opts.todo);
             setPendingTag(tag);
+            setIconsOpen(false);
             textareaRef.current?.focus();
           }}
         />
         <div className="input-row">
-          <div className={`input-container ${focused ? 'focused' : ''}`}>
+<div className={`input-container ${focused ? 'focused' : ''}`}>
             {pendingTag && (
               <span
                 className="tag-badge"
@@ -1954,6 +1983,10 @@ function App() {
               onKeyDown={handleKeyDown}
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
             />
           </div>
           <button
