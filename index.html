@@ -303,7 +303,7 @@
     position: relative;
     background: var(--memo-bg);
     border: 1px solid var(--memo-border);
-    border-radius: 12px;
+    border-radius: 20px;
     padding: 8px 12px;
     transition: var(--theme-transition), border-color 0.2s, box-shadow 0.2s;
     display: flex;
@@ -1979,8 +1979,8 @@ function App() {
             }
           }}
         />
-        <div className="input-row">
-<div className={`input-container ${focused ? 'focused' : ''}`}>
+        <form className="input-row" autoComplete="off" onSubmit={e => { e.preventDefault(); commitMemo(); }}>
+          <div className={`input-container ${focused ? 'focused' : ''}`}>
             {pendingTag && (
               <span className="pending-emoji">{pendingTag.split(' ')[0]}</span>
             )}
@@ -2000,14 +2000,15 @@ function App() {
               autoCapitalize="none"
               spellCheck={false}
               data-form-type="other"
+              data-lpignore="true"
             />
           </div>
           <button
+            type="submit"
             className="drop-btn"
-            onClick={commitMemo}
             disabled={!draft.trim() && !pendingTag}
           >↑</button>
-        </div>
+        </form>
       </div>
 
       <div className="timeline">
