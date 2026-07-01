@@ -289,43 +289,36 @@
   }
 
   /* ====== INPUT AREA ====== */
-  .input-wrapper {
+  .input-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 4px 16px 8px;
     max-width: 680px;
     margin: 0 auto;
-    padding: 16px 24px;
   }
 
   .input-container {
+    flex: 1;
     position: relative;
     background: var(--memo-bg);
     border: 1px solid var(--memo-border);
-    border-radius: 2px;
-    padding: 14px 16px 10px;
+    border-radius: 12px;
+    padding: 8px 12px;
     transition: var(--theme-transition), border-color 0.2s, box-shadow 0.2s;
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    min-width: 0;
   }
 
   .input-container.focused {
     border-color: rgba(233,30,140,0.4);
-    box-shadow: 0 0 20px rgba(233,30,140,0.1);
-  }
-
-  .input-meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-  }
-
-  .input-meta-date {
-    font-family: 'Orbitron', monospace;
-    font-size: 8px;
-    letter-spacing: 0.2em;
-    color: var(--pink);
-    text-shadow: 0 0 8px rgba(233,30,140,0.5);
+    box-shadow: 0 0 16px rgba(233,30,140,0.1);
   }
 
   .log-input {
-    width: 100%;
+    flex: 1;
     background: transparent;
     border: none;
     color: var(--text);
@@ -333,60 +326,58 @@
     font-size: 16px;
     font-weight: 400;
     letter-spacing: 0.02em;
-    line-height: 1.6;
+    line-height: 1.5;
     resize: none;
     outline: none;
-    min-height: 60px;
+    min-height: 24px;
+    max-height: 160px;
+    overflow-y: auto;
     caret-color: var(--pink);
     transition: color 0.35s ease;
+    padding: 0;
   }
 
   .log-input::placeholder { color: var(--text-muted); }
 
-  .input-footer {
+  .drop-btn {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    background: var(--pink);
+    border: none;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-top: 8px;
+    justify-content: center;
+    transition: opacity 0.15s, transform 0.1s;
   }
-
-  .hint-text {
-    font-family: 'Orbitron', monospace;
-    font-size: 7px;
-    letter-spacing: 0.2em;
-    color: var(--text-muted);
-  }
-
-  .saved-indicator {
-    font-family: 'Orbitron', monospace;
-    font-size: 7px;
-    letter-spacing: 0.3em;
-    color: var(--cyan);
-    text-shadow: 0 0 8px var(--cyan);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-
-  .saved-indicator.visible { opacity: 1; }
+  .drop-btn:active { opacity: 0.75; transform: scale(0.95); }
+  .drop-btn:disabled { opacity: 0.3; cursor: default; }
 
   /* ====== QUICK LOG ====== */
   .quick-log-wrapper {
     max-width: 680px;
     margin: 0 auto;
-    padding: 0 16px 12px;
+    padding: 8px 16px 4px;
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 6px;
+    scrollbar-width: none;
   }
+  .quick-log-wrapper::-webkit-scrollbar { display: none; }
 
   .quick-btn {
-    width: 40px;
-    height: 40px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     border: 1px solid var(--memo-border);
     background: var(--memo-bg);
-    font-size: 20px;
+    font-size: 17px;
     line-height: 1;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -415,6 +406,11 @@
   .quick-btn--diary-tag {
     opacity: 0.85;
     border-style: dashed;
+  }
+  .quick-btn--active {
+    border-color: var(--pink);
+    background: rgba(233,30,140,0.15);
+    box-shadow: 0 0 8px rgba(233,30,140,0.3);
   }
   /* 日記モーダル */
   .diary-modal-overlay {
@@ -492,7 +488,7 @@
   }
   /* タイムラインがボトムバーに隠れないよう余白 */
   .timeline-spacer {
-    height: 260px;
+    height: 100px;
   }
 
   .date-divider {
@@ -1693,13 +1689,6 @@ function App() {
     return () => sb.removeChannel(channel);
   }, [session]);
 
-  /* Auto-resize textarea */
-  useEffect(() => {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    ta.style.height = 'auto';
-    ta.style.height = Math.max(60, ta.scrollHeight) + 'px';
-  }, [draft]);
 
   const commitMemo = useCallback(async () => {
     const text = draft.trim();
@@ -1707,6 +1696,7 @@ function App() {
     const isTodo = pendingTodoRef.current;
     if (!text && !tag) return;
     setDraft('');
+    if (textareaRef.current) textareaRef.current.style.height = 'auto';
     pendingTagRef.current = null;
     pendingTodoRef.current = false;
     setPendingTag(null);
@@ -1772,9 +1762,14 @@ function App() {
   const handleKeyDown = (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       e.preventDefault();
-      clearTimeout(debounceRef.current);
       commitMemo();
     }
+  };
+
+  const handleAutoResize = (e) => {
+    const el = e.target;
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 160) + 'px';
   };
 
   const updateMemo = useCallback(async (id, text, tag) => {
@@ -1808,10 +1803,6 @@ function App() {
 
   const handleChange = (e) => {
     setDraft(e.target.value);
-    clearTimeout(debounceRef.current);
-    if (e.target.value.trim()) {
-      debounceRef.current = setTimeout(() => commitMemo(), 2000);
-    }
   };
 
   /* Group by date */
@@ -1926,59 +1917,45 @@ function App() {
       </header>
 
       <div className="bottom-bar">
-        <div className="input-wrapper">
-          <div className={`input-container ${focused ? 'focused' : ''}`}>
-            <div className="input-meta">
-              <span className="input-meta-date">{nowFormatted()}</span>
-              {pendingTag && (
-                <span
-                  className="tag-badge"
-                  style={{marginBottom:0, cursor:'pointer'}}
-                  onClick={() => { pendingTagRef.current = null; setPendingTag(null); }}
-                  title="タップで削除"
-                >{pendingTag} ×</span>
-              )}
-            </div>
-            <textarea
-              ref={textareaRef}
-              className="log-input"
-              placeholder="今、ここに何かを残す…"
-              value={draft}
-              onChange={handleChange}
-              onKeyDown={handleKeyDown}
-              onFocus={() => setFocused(true)}
-              onBlur={() => {
-                setFocused(false);
-                if (draft.trim() || pendingTag) {
-                  clearTimeout(debounceRef.current);
-                  commitMemo();
-                }
-              }}
-            />
-            <div className="input-footer">
-              <span className="hint-text">⌘ + ENTER to commit</span>
-              <span className={`saved-indicator ${savedVisible ? 'visible' : ''}`}>
-                ◆ SAVED
-              </span>
-            </div>
-          </div>
-        </div>
         <QuickLogBar
           externalStatuses={statusFromMemos}
           onOpenDiary={() => setShowDiary({ dateKey: sessionKey, dateStr: sessionDateStr })}
           onSelect={(tag, opts) => {
-            clearTimeout(debounceRef.current);
-            if (!draft.trim()) {
-              postTagOnly(tag);
-            } else {
-              pendingTagRef.current = tag;
-              pendingTodoRef.current = !!(opts && opts.todo);
-              setPendingTag(tag);
-              textareaRef.current?.focus();
-              debounceRef.current = setTimeout(() => commitMemo(), 2000);
-            }
+            pendingTagRef.current = tag;
+            pendingTodoRef.current = !!(opts && opts.todo);
+            setPendingTag(tag);
+            textareaRef.current?.focus();
           }}
         />
+        <div className="input-row">
+          <div className={`input-container ${focused ? 'focused' : ''}`}>
+            {pendingTag && (
+              <span
+                className="tag-badge"
+                style={{marginBottom:0, cursor:'pointer', flexShrink:0}}
+                onClick={() => { pendingTagRef.current = null; setPendingTag(null); }}
+                title="タップで削除"
+              >{pendingTag} ×</span>
+            )}
+            <textarea
+              ref={textareaRef}
+              className="log-input"
+              rows={1}
+              placeholder="今、ここに残す…"
+              value={draft}
+              onChange={handleChange}
+              onInput={handleAutoResize}
+              onKeyDown={handleKeyDown}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+            />
+          </div>
+          <button
+            className="drop-btn"
+            onClick={commitMemo}
+            disabled={!draft.trim() && !pendingTag}
+          >↑</button>
+        </div>
       </div>
 
       <div className="timeline">
