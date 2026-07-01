@@ -339,6 +339,14 @@
 
   .log-input::placeholder { color: var(--text-muted); }
 
+  .pending-emoji {
+    font-size: 18px;
+    flex-shrink: 0;
+    align-self: flex-start;
+    line-height: 24px;
+    margin-top: 0;
+  }
+
   .drop-btn {
     flex-shrink: 0;
     width: 40px;
@@ -1401,6 +1409,10 @@ function MemoCard({ memo, isNew, onUpdate, onDelete, onEditStart, onEditEnd }) {
             onKeyDown={handleKeyDown}
             onClick={e => e.stopPropagation()}
             placeholder="コメントを追加…"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="none"
+            spellCheck={false}
           />
           <div className="memo-edit-footer" onClick={e => e.stopPropagation()}>
             <span className="edit-hint">⌘ + ENTER to save  •  ESC to cancel</span>
@@ -1955,22 +1967,22 @@ function App() {
           iconsOpen={iconsOpen}
           onOpenDiary={() => setShowDiary({ dateKey: sessionKey, dateStr: sessionDateStr })}
           onSelect={(tag, opts) => {
-            pendingTagRef.current = tag;
-            pendingTodoRef.current = !!(opts && opts.todo);
-            setPendingTag(tag);
-            setIconsOpen(false);
-            textareaRef.current?.focus();
+            if (pendingTagRef.current === tag) {
+              pendingTagRef.current = null;
+              pendingTodoRef.current = false;
+              setPendingTag(null);
+            } else {
+              pendingTagRef.current = tag;
+              pendingTodoRef.current = !!(opts && opts.todo);
+              setPendingTag(tag);
+              textareaRef.current?.focus();
+            }
           }}
         />
         <div className="input-row">
 <div className={`input-container ${focused ? 'focused' : ''}`}>
             {pendingTag && (
-              <span
-                className="tag-badge"
-                style={{marginBottom:0, cursor:'pointer', flexShrink:0}}
-                onClick={() => { pendingTagRef.current = null; setPendingTag(null); }}
-                title="タップで削除"
-              >{pendingTag} ×</span>
+              <span className="pending-emoji">{pendingTag.split(' ')[0]}</span>
             )}
             <textarea
               ref={textareaRef}
@@ -1985,8 +1997,9 @@ function App() {
               onBlur={() => setFocused(false)}
               autoComplete="off"
               autoCorrect="off"
-              autoCapitalize="off"
+              autoCapitalize="none"
               spellCheck={false}
+              data-form-type="other"
             />
           </div>
           <button
