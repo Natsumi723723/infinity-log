@@ -1536,28 +1536,26 @@ function DateDivider({ dateStr, isToday, onSummarize, onOpenDiary }) {
 /* ── Auth Screen ── */
 function AuthScreen() {
   const [email, setEmail] = useState('');
-  const [sending, setSending] = useState(false);
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
 
-  const sendMagicLink = async () => {
-    if (!email.trim()) return;
-    setSending(true);
+  const signIn = async () => {
+    if (!email.trim() || !password) return;
+    setLoading(true);
     setMsg('');
-    const redirectTo = window.location.href.split('?')[0].split('#')[0];
-    const { error } = await sb.auth.signInWithOtp({
+    const { error } = await sb.auth.signInWithPassword({
       email: email.trim(),
-      options: { emailRedirectTo: redirectTo }
+      password,
     });
     if (error) {
-      setMsg('エラー: ' + error.message);
-    } else {
-      setMsg('メールを送りました。リンクをクリックしてログイン ✓');
+      setMsg('メールアドレスまたはパスワードが違います');
     }
-    setSending(false);
+    setLoading(false);
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') sendMagicLink();
+    if (e.key === 'Enter') signIn();
   };
 
   return (
@@ -1568,16 +1566,24 @@ function AuthScreen() {
         <input
           type="email"
           className="auth-email-input"
-          placeholder="your@email.com"
+          placeholder="メールアドレス"
           value={email}
           onChange={e => setEmail(e.target.value)}
           onKeyDown={handleKeyDown}
           autoFocus
         />
-        <button className="auth-btn" onClick={sendMagicLink} disabled={sending || !email.trim()}>
-          {sending ? 'SENDING...' : 'SEND MAGIC LINK'}
+        <input
+          type="password"
+          className="auth-email-input"
+          placeholder="パスワード"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          onKeyDown={handleKeyDown}
+        />
+        <button className="auth-btn" onClick={signIn} disabled={loading || !email.trim() || !password}>
+          {loading ? '...' : 'LOGIN'}
         </button>
-        <div className="auth-msg">{msg}</div>
+        {msg && <div className="auth-msg">{msg}</div>}
       </div>
     </div>
   );
